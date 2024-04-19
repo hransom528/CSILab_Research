@@ -1,0 +1,4 @@
+Backpropagation is an algorithm used for training a [[Neural Network]] where the [[Gradient]] of a [[Loss Function]] is efficiently computed by iterating backwards from the last layer of the network. 
+
+- **Motivation/Intuition:** The fundamental idea of backpropagation is that the activation of the nodes in the final (output) layer of the network depends on the activations of the nodes in the previous layer and the weights and biases of those connections. While we can directly influence the weights and biases of the connections of the current layer, we cannot directly influence the activations of the nodes in the previous layer. So, to approach a local minimum of the cost function based on a [[Gradient Descent (GD)]] computation, we want to recurse backwards through the network to change the activations of prior nodes through the modification of weights and biases of the connections. 
+- 

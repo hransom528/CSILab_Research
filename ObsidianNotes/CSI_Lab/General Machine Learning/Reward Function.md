@@ -1,0 +1,1 @@
+A reward function is a type of [[Objective Function]] that is the opposite of a [[Loss Function]] in that _____

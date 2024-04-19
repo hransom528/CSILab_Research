@@ -1,0 +1,4 @@
+Federated Averaging (FedAvg) is a generalization of [[FedSGD]] that allows local nodes to perform more than one batch update on local data. It also exchanges the updated weights instead of the gradients. FedAvg seeks to reduce the communication overhead when performing [[Federated Learning]] training. 
+- **Motivation**: In [[FedSGD]], if all the local nodes start from the same initialization, averaging the gradients is strictly equal to averaging the weights themselves. 
+- **Benefit**: By performing multiple local updates on available clients before communicating with a server, the communication bottleneck can be reduced. 
+- **Key Drawback**: FedAvg does not perform consistently on heterogeneous data due to client drift (even with full-batch updates and all clients participating). This is proven in [[Scaffold]]. 

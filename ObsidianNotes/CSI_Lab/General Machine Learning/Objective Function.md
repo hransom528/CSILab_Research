@@ -1,0 +1,1 @@
+An **objective function** is either a [[Loss Function]] or a [[Reward Function]] that needs to be minimized (or maximized). 
