@@ -1,0 +1,1 @@
+**Weighted graphs** are a subset of [[Graphs]] in which each [[Edge]] has some value associated with it. In an [[Adjacency Matrix]] $\mathbf{A}$, an edge $(u, v) \in \mathbf{E}$ can be represented as an entry $\mathbf{A}[u, v]$ that can take on any real value (as opposed to just $\{0, 1\}$).

@@ -1,0 +1,1 @@
+Similar to an [[Adjacency Matrix]], an **Adjacency Tensor** can be used to represent [[Graphs]] 

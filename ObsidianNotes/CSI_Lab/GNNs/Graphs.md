@@ -1,0 +1,1 @@
+A **graph** is defined by a set of [[Node]]s and [[Edge]]s such that $G = (V, E)$. 

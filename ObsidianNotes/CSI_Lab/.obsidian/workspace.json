@@ -8,41 +8,48 @@
         "type": "tabs",
         "children": [
           {
-            "id": "293157c17da241f6",
+            "id": "ed09c34d14a12095",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "SCAFFOLD Algorithm/Scaffold.md",
+                "file": "GNNs/Multipartite Graphs.md",
                 "mode": "source",
                 "source": false
               }
             }
           },
           {
-            "id": "c439553953709532",
+            "id": "5c8aaea16efa5784",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "General Machine Learning/Deep Learning.md",
+                "file": "GNNs/Multiplex Graphs.md",
                 "mode": "source",
                 "source": false
               }
             }
           },
           {
-            "id": "e8768e64826a9c43",
+            "id": "7fb1cc0f8678b112",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "General Machine Learning/Chain Rule in Neural Networks.md",
+                "file": "GNNs/Adjacency Tensor.md",
                 "mode": "source",
                 "source": false
               }
             }
-          },
+          }
+        ],
+        "currentTab": 2
+      },
+      {
+        "id": "1837a8314d0a7f71",
+        "type": "tabs",
+        "children": [
           {
             "id": "98a5cd3742956bce",
             "type": "leaf",
@@ -56,43 +63,12 @@
             }
           },
           {
-            "id": "c8ff21d250d31bb5",
+            "id": "d8e22445b6b8124e",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
                 "file": "General Machine Learning/Reward Function.md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          },
-          {
-            "id": "92a4144d9fc8041d",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "General Machine Learning/Stochastic Gradient Descent (SGD).md",
-                "mode": "source",
-                "source": false
-              }
-            }
-          }
-        ],
-        "currentTab": 5
-      },
-      {
-        "id": "1837a8314d0a7f71",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "144deefbb6c87901",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "General Machine Learning/Gradient Descent (GD).md",
                 "mode": "source",
                 "source": false
               }
@@ -134,7 +110,8 @@
               }
             }
           }
-        ]
+        ],
+        "currentTab": 4
       }
     ],
     "direction": "vertical"
@@ -200,7 +177,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "General Machine Learning/Stochastic Gradient Descent (SGD).md",
+                "file": "GNNs/Adjacency Tensor.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -217,7 +194,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "General Machine Learning/Stochastic Gradient Descent (SGD).md",
+                "file": "GNNs/Adjacency Tensor.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -240,7 +217,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "General Machine Learning/Stochastic Gradient Descent (SGD).md"
+                "file": "GNNs/Adjacency Tensor.md"
               }
             }
           }
@@ -262,36 +239,37 @@
       "markdown-importer:Open format converter": false
     }
   },
-  "active": "37b6800c3a9b9725",
+  "active": "7fb1cc0f8678b112",
   "lastOpenFiles": [
-    "SCAFFOLD Algorithm/Scaffold.md",
-    "General Machine Learning/Stochastic Gradient Descent (SGD).md",
-    "General Machine Learning/Gradient Descent (GD).md",
+    "GNNs/Multiplex Graphs.md",
+    "GNNs/Multipartite Graphs.md",
+    "GNNs/Multi-Relational Graphs.md",
+    "GNNs/Adjacency Tensor.md",
+    "GNNs/Heterogeneous Graphs.md",
+    "GNNs/Node.md",
+    "General Machine Learning/Residual Sum of Squares (RSS).md",
+    "GNNs/Simple Graphs.md",
+    "GNNs/Edge.md",
+    "GNNs/Adjacency Matrix.md",
+    "GNNs/Weighted Graph.md",
+    "GNNs/Undirected Graph.md",
+    "GNNs/Directed Graph.md",
+    "SCAFFOLD Algorithm/Hessian Matrix.md",
     "General Machine Learning/Chain Rule in Neural Networks.md",
+    "GNNs/Graphs.md",
+    "General Machine Learning/Machine Learning Model.md",
+    "General Machine Learning/Reward Function.md",
+    "General Machine Learning/Gradient Descent (GD).md",
+    "General Machine Learning/Objective Function.md",
+    "Welcome.md",
+    "GNNs",
+    "SCAFFOLD Algorithm/Scaffold.md",
+    "General Machine Learning/Deep Learning.md",
+    "SCAFFOLD Algorithm/Bounded Hessian Dissimilarity (BHD).md",
+    "General Machine Learning/Stochastic Gradient Descent (SGD).md",
     "General Machine Learning/Backpropagation.md",
     "SCAFFOLD Algorithm/ScaffoldNotation.png",
-    "SCAFFOLD Algorithm/Bounded Gradient Dissimilarity (BGD).md",
-    "SCAFFOLD Algorithm/Hessian Matrix.md",
-    "SCAFFOLD Algorithm/Bounded Hessian Dissimilarity (BHD).md",
     "SCAFFOLD Algorithm/ScaffoldAlgorithm.png",
-    "General Machine Learning/Reward Function.md",
-    "General Machine Learning/Deep Learning.md",
-    "General Machine Learning/Machine Learning Model.md",
-    "General Machine Learning/Loss Function.md",
-    "General Machine Learning/Activation Function.md",
-    "SCAFFOLD Algorithm/Federated Averaging (FedAvg).md",
-    "General Machine Learning/Neural Network.md",
-    "General Machine Learning/Sigmoid Function.md",
-    "General Machine Learning/Residual Sum of Squares (RSS).md",
-    "General Machine Learning/Objective Function.md",
-    "General Machine Learning/ReLU Activation Function.md",
-    "General Machine Learning/Gradient.md",
-    "General Machine Learning/Federated Learning.md",
-    "SCAFFOLD Algorithm/Key Challenges in Federated Optimization.md",
-    "SCAFFOLD Algorithm/Convexity.md",
-    "SCAFFOLD Algorithm/Control Variates.md",
-    "General Machine Learning/Independently and Identically Distributed (IID).md",
-    "Untitled",
     "Untitled.canvas",
     "General Machine Learning",
     "SCAFFOLD Algorithm",
