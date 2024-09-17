@@ -11,19 +11,53 @@ import networkx as nx
 class Graph:
 	# Constructor
 	def __init__(self, numNodes=0, numEdges=0):
+		#self.nodeList = []
+		#self.edgeList = []
 		self.nodes = numNodes
 		self.edges = numEdges
 		self.A = np.zeros((numNodes, numNodes))
 
 	# TODO: Create CSV import function
+	'''def importCSV(self, filename):
+		# Read the CSV file
+		df = pd.read_csv(filename)
+
+		# Get the number of nodes
+		self.nodes = df.shape[0]
+
+		# Get the number of edges
+		self.edges = df.shape[1]
+
+		# Convert the DataFrame to a numpy array
+		self.A = df.to_numpy()
+	'''
+
+	# Export adjacency matrix to CSV
+	def exportCSV(self, filename):
+		pd.DataFrame(self.A).to_csv(filename, index=False)
 
 	# TODO: Implement getter method for set of node neighbors
 	#def getNeighborSet(self, node):
 
-	# TODO: Implement inserting a pre-defined row into the adjacency matrix
-	#def insert_row(self, row, index):
+	# Inserts a pre-defined row into the adjacency matrix
+	def insertRow(self, row, index):
+		# Check input row
+		if type(row) is list:
+			row = np.asarray(row)
+		if (row.size != self.nodes):
+			raise ValueError("Row size does not match number of nodes")
+		if (row.shape == (1, self.nodes)):
+			row = row.T
+		
+		# Check input index
+		if (index < 0 or index >= self.nodes):
+			raise ValueError("Index out of bounds")
+		
+		# Insert the row into the adjacency matrix
+		self.A = np.insert(self.A, index, row, axis=1)
+		
 
-	# TODO: Gets the stationary distribution of the graph
+	# Gets the stationary distribution of the graph
 	def getStationaryDistribution(self):
 		# Get the row sums of the adjacency matrix
 		degrees = np.sum(self.A, axis=1)
@@ -36,4 +70,3 @@ class Graph:
 
 	# TODO: Graphically represent current graph
 	# def plot_graph(self):
-
