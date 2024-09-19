@@ -18,26 +18,31 @@ class Graph:
 		self.A = np.zeros((numNodes, numNodes))
 
 	# TODO: Create CSV import function
-	'''def importCSV(self, filename):
+	def importCSV(self, filename):
 		# Read the CSV file
 		df = pd.read_csv(filename)
 
 		# Get the number of nodes
+		if (df.shape[0] != df.shape[1]):
+			raise ValueError("Adjacency matrix not square!")
 		self.nodes = df.shape[0]
-
-		# Get the number of edges
-		self.edges = df.shape[1]
-
+		
 		# Convert the DataFrame to a numpy array
 		self.A = df.to_numpy()
-	'''
 
 	# Export adjacency matrix to CSV
 	def exportCSV(self, filename):
 		pd.DataFrame(self.A).to_csv(filename, index=False)
 
-	# TODO: Implement getter method for set of node neighbors
-	#def getNeighborSet(self, node):
+	# Getter method for set of node neighbors
+	def getNeighborSet(self, node):
+		neighbors = []
+		index = node - 1
+		row = self.A[index, :].getA1().tolist()
+		for i in range(0, len(row)):
+			if row[i]:
+				neighbors.append(i+1)
+		return neighbors
 
 	# Inserts a pre-defined row into the adjacency matrix
 	def insertRow(self, row, index):
@@ -56,6 +61,10 @@ class Graph:
 		# Insert the row into the adjacency matrix
 		self.A = np.insert(self.A, index, row, axis=1)
 		
+	# Replaces a row in the adjacency matrix at index with new row data
+	def replaceRow(self, row, index):
+		pass
+
 
 	# Gets the stationary distribution of the graph
 	def getStationaryDistribution(self):
