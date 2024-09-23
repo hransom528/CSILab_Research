@@ -52,16 +52,6 @@ class Graph:
 	def exportCSV(self, filename):
 		pd.DataFrame(self.A).to_csv(filename, index=False, header=None)
 
-	# Getter method for set of node neighbors
-	def getNeighborSet(self, node):
-		neighbors = []
-		index = node - 1
-		row = self.A[index, :].getA1().tolist()
-		for i in range(0, len(row)):
-			if row[i]:
-				neighbors.append(i+1)
-		return neighbors
-
 	# Inserts a pre-defined row into the adjacency matrix
 	def insertRow(self, row, index):
 		# Check input row
@@ -119,6 +109,22 @@ class Graph:
 				return False
 			
 		return True
+
+	# Get the degree of a node
+	def getDegree(self, node):
+		if (node < 1 or node > self.nodes):
+			raise ValueError("Node out of bounds")
+		return np.sum(self.A[node-1, :])
+
+	# Getter method for set of node neighbors
+	def getNeighborSet(self, node):
+		neighbors = []
+		index = node - 1
+		row = self.A[index, :].getA1().tolist()
+		for i in range(0, len(row)):
+			if row[i]:
+				neighbors.append(i+1)
+		return neighbors
 
 	# Gets the stationary distribution of the graph
 	def getStationaryDistribution(self):
