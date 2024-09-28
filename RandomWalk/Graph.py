@@ -43,7 +43,7 @@ class Graph:
 		for i in np.nditer(self.A):
 			if (i > 0):
 				self.edges += 1
-		
+		self.edges = self.edges // 2
 		# Convert the DataFrame to a numpy array
 		self.A = df.to_numpy()
 		return self
@@ -131,11 +131,13 @@ class Graph:
 		# Get the row sums of the adjacency matrix
 		degrees = np.sum(self.A, axis=1)
 
+		edgeCount = np.sum(self.A, axis=0)
+
 		# Normalize the row sums
 		pi = degrees / (2.0 * self.edges)
 
 		# Return the normalized row sums
 		return pi
-
+		
 	# TODO: Graphically represent current graph
 	# def plot_graph(self):
