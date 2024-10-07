@@ -17,7 +17,7 @@ from torch_geometric.loader import NeighborLoader
 from torch_geometric.nn import SAGEConv
 
 
-# SAGE Class
+# SAGE NN Class
 class SAGE(torch.nn.Module):
     def __init__(self, in_channels: int, hidden_channels: int,
                  out_channels: int, num_layers: int = 2):
