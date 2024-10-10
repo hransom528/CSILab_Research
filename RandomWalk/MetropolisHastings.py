@@ -1,34 +1,31 @@
 # Harris Ransom
 # Metropolis-Hastings Algorithm Implementation
+# See: https://prappleizer.github.io/Tutorials/MetropolisHastings/MetropolisHastings_Tutorial.html
 
 # Imports
 import numpy as np
 from Graph import Graph
+from scipy import stats
 
-# Metropolis-Hastings function
-# G - Graph
-# pi - Stationary distribution
-def MetropolisHastings(G, pi):
-    # 1.) Get an initial proposed transition matrix
-    n = G.nodes
-    Q = np.zeros((n, n))
-    for i in range(0, n):
-        for j in range(0, n):
-            if (G.A[i, j] > 0):
-                Q[i, j] = 1 / G.getDegree(i+1)
-            else:
-                Q[i, j] = 0
+# Metropolis Hastings class
+class MetropolisHastings():
+    # Constructor
+    def __init__(self):
+        self.Uniform = stats.uniform()
 
-    # 2.) Check Q for probability distribution criteria
-    for i in range(0, n):
-        if (np.sum(Q[i, :]) != 1):
-            raise ValueError(f"Q[{i}, :] is not a probability distribution")
-    print(Q)
+    def initialize(self, theta_init, nsteps):
+        self.theta_init = theta_init
+        self.nsteps = nsteps
 
-    # TODO: Finish the rest of the algorithm
+    def set_proposal_sigma(self, sigma):
+        covMatrix = sigma^2 * np.eye(self.nodes) # TODO: Fix dimension
+        self.proposal_distribution = stats.multivariate_normal(mean=None, cov=covMatrix)
 
-    # TODO: Return output
-    return Q
+    def set_target_distribution(self, pi):
+        pass
+
+    def sample():
+        pass
 
 # MAIN
 if __name__ == "__main__":

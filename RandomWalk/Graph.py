@@ -13,9 +13,10 @@ class Graph:
 		#self.nodeList = []
 		#self.edgeList = []
 		self.nodes = numNodes
-		self.edges = numEdges
-		# TODO: Randomly assign edges in A
+		self.edges = numEdges # TODO: Randomly assign edges in A
 		self.A = np.zeros((numNodes, numNodes))
+		self.currentNode = 0
+		self.nodesVisited = []
 
 	# String constructor
 	def __str__(self):
@@ -141,3 +142,35 @@ class Graph:
 		
 	# TODO: Graphically represent current graph
 	# def plot_graph(self):
+
+	# Gets transistion matrix based on graph and stationary distribution
+	def getTransistionMatrix(self, pi):
+		# 1.) Get an initial proposed transition matrix
+		n = self.nodes
+		Q = np.zeros((n, n))
+		for i in range(0, n):
+			for j in range(0, n):
+				if (self.A[i, j] > 0):
+					Q[i, j] = 1 / self.getDegree(i+1)
+				else:
+					Q[i, j] = 0
+
+		# 2.) Check Q for probability distribution criteria
+		for i in range(0, n):
+			if (np.sum(Q[i, :]) != 1):
+				raise ValueError(f"Q[{i}, :] is not a probability distribution")
+		#print(Q)
+
+		# 3.) Calculates P from Q and pi
+		P = np.zeros((n, n))
+		for i in range(0, n):
+			for j in range(0, n):
+				if (i != j):
+					if (Q[i, j] > 0) and (Q[j, i] > 0):
+						P[i, j] = Q[i, j] * min(1, (pi[j] * Q[j, i] / pi[i] * Q[i, j]))
+					else:
+						P[i, j] = 0
+		for i in range(0, n):
+			P[i, i] = 1 - np.sum(P[i, :])
+		
+		return P
