@@ -33,7 +33,6 @@ def getNeighborTypeSum(G, node):
 
 # Glauber Dynamics 
 def GlauberDynamics(G, times, temperature):
-    edges = np.squeeze(np.asarray(G.A))
     for t in times:
         u = np.random.choice(np.arange(G.nodes))
         v = np.random.choice(np.arange(G.nodes))
