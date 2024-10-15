@@ -5,6 +5,7 @@
 # Imports
 import numpy as np
 import pandas as pd
+import networkx as nx
 
 # Graph class
 class Graph:
@@ -57,13 +58,22 @@ class Graph:
 				self.edges += 1
 		self.edges = self.edges // 2
 
+		# Misc. fields
+		self.typed = False
+
 		# Convert the DataFrame to a numpy array
 		self.A = df.to_numpy()
 		return self
 
-	# TODO: Define importTypedCSV
+	# Typed graph CSV import
 	def importTypedCSV(filename, nodeTypes):
-		pass
+		self = Graph.importCSV(filename)
+		if (len(nodeTypes) != self.nodes):
+			raise ValueError("nodeTypes does not fit the dimensions of graph")
+		else:
+			self.nodeTypes = nodeTypes
+			self.typed = True
+		return self
 
 	# Export adjacency matrix to CSV
 	def exportCSV(self, filename):
@@ -136,7 +146,7 @@ class Graph:
 	# Getter method for set of node neighbors
 	def getNeighborSet(self, node):
 		neighbors = []
-		row = self.A[node, :].getA1().tolist()
+		row = np.asarray(self.A[node, :]).ravel().tolist()
 		for i in range(0, len(row)):
 			if row[i]:
 				neighbors.append(i+1)
@@ -144,7 +154,7 @@ class Graph:
 
 	# Returns node value (type)
 	def getNodeType(self, node):
-		if (self.isTyped):
+		if (self.typed):
 			if (node < 0) or (node > self.nodes):
 				raise ValueError("Node value out of bounds")
 			return self.nodeTypes[node]
@@ -164,8 +174,11 @@ class Graph:
 		# Return the normalized row sums
 		return pi
 		
-	# TODO: Graphically represent current graph
-	# def plot_graph(self):
+	# Graphically represent current graph
+	def plot_graph(self):
+		Graphtype = nx.Graph()
+		G = nx.from_numpy_array(self.A)
+		nx.draw(G)
 
 	# Gets transistion matrix based on graph and stationary distribution
 	def getTransistionMatrix(self, pi):
