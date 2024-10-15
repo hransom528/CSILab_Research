@@ -6,6 +6,7 @@
 import numpy as np
 import pandas as pd
 import networkx as nx
+import matplotlib.pyplot as plt
 
 # Graph class
 class Graph:
@@ -173,12 +174,43 @@ class Graph:
 
 		# Return the normalized row sums
 		return pi
-		
-	# Graphically represent current graph
-	def plot_graph(self):
+
+	# Graphically represent current graph	
+	def plot_graph(self, path=""):
 		Graphtype = nx.Graph()
 		G = nx.from_numpy_array(self.A)
-		nx.draw(G)
+		nx.draw_networkx(G)
+		if (path != ""):
+			plt.savefig(path)
+		else:
+			plt.show()
+	
+	# Graphically represent current typed graph
+	def plot_typed_graph(self, path=""):
+		# Check if graph is typed
+		if (not self.typed):
+			raise ValueError("Graph is not typed")
+		
+		# Create networkx graph
+		Graphtype = nx.Graph()
+		G = nx.from_numpy_array(self.A)
+
+		# Assign node types to graph
+		color_map = []
+		for i in range(0, self.nodes):
+			G.nodes[i]['type'] = self.nodeTypes[i]
+			if (self.nodeTypes[i] == -1):
+				color_map.append('blue')
+			else:
+				color_map.append('red')
+
+		# Draw the graph
+		#print(G.nodes.data())
+		nx.draw_planar(G, node_color=color_map, with_labels=True)
+		if (path != ""):
+			plt.savefig(path)
+		else:
+			plt.show()
 
 	# Gets transistion matrix based on graph and stationary distribution
 	def getTransistionMatrix(self, pi):

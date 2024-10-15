@@ -9,7 +9,7 @@ from Graph import Graph
 from TVDistance import tvDistance
 
 # K(sigma, v) - Get number of different-classed neighbors for a given node
-def getDifferentNeighbors(G, sigma, node):
+def getDifferentNeighbors(G, node):
     adjMatrix = G.A
     n = adjMatrix.shape[0]
     nodeType = G.getNodeType(node)
@@ -43,13 +43,14 @@ def GlauberDynamicsDataSwitch(G, times, temperature):
             # TODO: Calc exp3 as probability of configuration after exchanging the data
             probSwitch = exp(-temperature * exp1) / (exp(-temperature * exp2) + exp(-temperature * exp1))
 
-            # TODO: Switches node type/data with probability probSwitch
+            # Switches node type/data with probability probSwitch
             switch = np.random.choice([0, 1], p=[1-probSwitch, probSwitch])
             if (switch == 1):
                 G.nodeTypes[u], G.nodeTypes[v] = G.nodeTypes[v], G.nodeTypes[u]
+                # TODO: Figure out how to modify the graph's adjacency matrix
 
-        # TODO: Plot/log graph state at each iteration
-        G.plot_graph()
+        # Plot/log graph state at each iteration
+        G.plot_typed_graph(f"mixingPics/mixingGraph{t}.png")
 
 # TODO: Metropolis-Hastings
 def MetropolisHastingsDataSwitch(G, times, temperature):
@@ -60,19 +61,20 @@ def MetropolisHastingsDataSwitch(G, times, temperature):
 # MAIN
 if __name__ == "__main__":
 	# Create a typed graph object
-    #G = Graph.importCSV("mixingGraph.csv")
     G = Graph.importTypedCSV("mixingGraph.csv", [-1,1,1,-1,1,-1,-1,1])
-    print(G)
-    G.plot_graph()
-    
+    G.plot_typed_graph("initialGraph.png")
+    G2 = Graph.importTypedCSV("mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
+    G2.plot_typed_graph("initialGraph2.png")
+
 	# Generate time points
-    n = 100
+    n = 30
     times = np.arange(n+1)
 
     # Test getDifferentNeighbors
-    getDifferentNeighbors(G, [0.1, 0.5, 0.4], 5)
+    print(getDifferentNeighbors(G, 5))
 
     # Run Glauber Dynamics data switching simulation
     GlauberDynamicsDataSwitch(G, times, 1) # TODO: What temperature to define?
 
     # TODO: Run Metropolis-Hastings data switching simulation
+    #MetropolisHastingsDataSwitch(G, times, 1)
