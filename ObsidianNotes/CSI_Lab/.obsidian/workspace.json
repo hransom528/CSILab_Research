@@ -37,7 +37,7 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "GNNs/Adjacency Tensor.md",
+                "file": "General Machine Learning/Gradient Descent (GD).md",
                 "mode": "source",
                 "source": false
               }
@@ -177,7 +177,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "GNNs/Adjacency Tensor.md",
+                "file": "General Machine Learning/Gradient Descent (GD).md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -194,7 +194,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "GNNs/Adjacency Tensor.md",
+                "file": "General Machine Learning/Gradient Descent (GD).md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -217,7 +217,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "GNNs/Adjacency Tensor.md"
+                "file": "General Machine Learning/Gradient Descent (GD).md"
               }
             }
           }
@@ -241,10 +241,11 @@
   },
   "active": "7fb1cc0f8678b112",
   "lastOpenFiles": [
+    "General Machine Learning/Stochastic Gradient Descent (SGD).md",
+    "GNNs/Adjacency Tensor.md",
     "GNNs/Multipartite Graphs.md",
     "GNNs/Multiplex Graphs.md",
     "GNNs/Multi-Relational Graphs.md",
-    "GNNs/Adjacency Tensor.md",
     "GNNs/Heterogeneous Graphs.md",
     "GNNs/Node.md",
     "General Machine Learning/Residual Sum of Squares (RSS).md",
@@ -266,7 +267,6 @@
     "SCAFFOLD Algorithm/Scaffold.md",
     "General Machine Learning/Deep Learning.md",
     "SCAFFOLD Algorithm/Bounded Hessian Dissimilarity (BHD).md",
-    "General Machine Learning/Stochastic Gradient Descent (SGD).md",
     "General Machine Learning/Backpropagation.md",
     "SCAFFOLD Algorithm/ScaffoldNotation.png",
     "SCAFFOLD Algorithm/ScaffoldAlgorithm.png",
