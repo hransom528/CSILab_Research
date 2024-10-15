@@ -52,7 +52,7 @@ def LazyRandomWalk(G, pi):
 # Random Walk function
 # G - Graph
 # pi - Stationary distribution
-def MetropolisHastingsRandomWalk(G, pi):
+def MetropolisHastingsRandomWalk(G, pi, times):
     # 1.) Get an initial proposed transition matrix
     n = G.nodes
     Q = np.zeros((n, n))
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     #print(sd)
 
     # Perform Metropolis Hastings Random Walk
-    nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, sd)
+    nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, sd, times)
 
     # Output simulation results
     #plotRandomWalk(times, nodesVisited)

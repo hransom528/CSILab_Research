@@ -9,14 +9,25 @@ import pandas as pd
 # Graph class
 class Graph:
 	# Constructor
-	def __init__(self, numNodes=0, numEdges=0):
+	def __init__(self, numNodes=0, numEdges=0, isTyped=False, nodeTypes=[]):
+		# Basic graph fields
 		#self.nodeList = []
 		#self.edgeList = []
 		self.nodes = numNodes
 		self.edges = numEdges # TODO: Randomly assign edges in A
 		self.A = np.zeros((numNodes, numNodes))
+
+		# Random Walk Fields
 		self.currentNode = 0
 		self.nodesVisited = []
+
+		# Typed Graph Fields
+		self.typed = isTyped
+		if (isTyped):
+			if (len(nodeTypes) == numNodes):
+				self.nodeTypes = nodeTypes
+			else:
+				raise ValueError("nodeTypes does not fit the dimensions of graph")
 
 	# String constructor
 	def __str__(self):
@@ -42,12 +53,17 @@ class Graph:
 		# Get the number of edges
 		self.edges = 0
 		for i in np.nditer(self.A):
-			if (i > 0):
+			if (i != 0):
 				self.edges += 1
 		self.edges = self.edges // 2
+
 		# Convert the DataFrame to a numpy array
 		self.A = df.to_numpy()
 		return self
+
+	# TODO: Define importTypedCSV
+	def importTypedCSV(filename, nodeTypes):
+		pass
 
 	# Export adjacency matrix to CSV
 	def exportCSV(self, filename):
@@ -120,12 +136,20 @@ class Graph:
 	# Getter method for set of node neighbors
 	def getNeighborSet(self, node):
 		neighbors = []
-		index = node - 1
-		row = self.A[index, :].getA1().tolist()
+		row = self.A[node, :].getA1().tolist()
 		for i in range(0, len(row)):
 			if row[i]:
 				neighbors.append(i+1)
 		return neighbors
+
+	# Returns node value (type)
+	def getNodeType(self, node):
+		if (self.isTyped):
+			if (node < 0) or (node > self.nodes):
+				raise ValueError("Node value out of bounds")
+			return self.nodeTypes[node]
+		else:
+			return 0
 
 	# Gets the stationary distribution of the graph
 	def getStationaryDistribution(self):
