@@ -61,9 +61,9 @@ def MetropolisHastingsDataSwitch(G, times, temperature):
 # MAIN
 if __name__ == "__main__":
 	# Create a typed graph object
-    G = Graph.importTypedCSV("mixingGraph.csv", [-1,1,1,-1,1,-1,-1,1])
+    G = Graph.importTypedCSV("graphData/mixingGraph.csv", [-1,1,1,-1,1,-1,-1,1])
     G.plot_typed_graph("initialGraph.png")
-    G2 = Graph.importTypedCSV("mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
+    G2 = Graph.importTypedCSV("graphData/mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
     G2.plot_typed_graph("initialGraph2.png")
 
 	# Generate time points

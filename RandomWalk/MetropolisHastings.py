@@ -30,7 +30,7 @@ class MetropolisHastings():
 # MAIN
 if __name__ == "__main__":
     # Create a graph object
-    G = Graph.importCSV("simulation.csv")
+    G = Graph.importCSV("graphData/simulation.csv")
     print(G)
         
     # Create a stationary distribution

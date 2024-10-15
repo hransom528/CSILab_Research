@@ -110,7 +110,7 @@ def MetropolisHastingsRandomWalk(G, pi, times):
 if __name__ == "__main__":
     pass
     # Create a graph object
-    G = Graph.importCSV("simulation.csv")
+    G = Graph.importCSV("graphData/simulation.csv")
     print(G)
 
     # Generate time points

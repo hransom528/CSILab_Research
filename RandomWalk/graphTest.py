@@ -17,7 +17,7 @@ if __name__ == "__main__":
 	#graph1 = Graph(numNodes, numEdges)
 
 	# Test importCSV
-	graph2 = Graph.importCSV("importCSV.csv")
+	graph2 = Graph.importCSV("graphData/importCSV.csv")
 
 	# Test getStationaryDistribution
 	stationaryDist = graph2.getStationaryDistribution()
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 	print(f"Is imported graph a DAG? {isDag}")
 
 	# Test exportCSV
-	graph2.exportCSV("exportCSV.csv")
+	graph2.exportCSV("graphData/exportCSV.csv")
 
 	# Output final graph (test __str__)
 	print(graph2)
