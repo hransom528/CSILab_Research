@@ -150,7 +150,7 @@ class Graph:
 		row = np.asarray(self.A[node, :]).ravel().tolist()
 		for i in range(0, len(row)):
 			if row[i]:
-				neighbors.append(i+1)
+				neighbors.append(i)
 		return neighbors
 
 	# Returns node value (type)

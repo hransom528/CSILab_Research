@@ -2,6 +2,8 @@
 # Data Mixing - Glauber Dynamics
 
 # Imports
+import os
+import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from math import exp
@@ -19,7 +21,7 @@ def getDifferentNeighbors(G, node):
     for j in range(0, n):
         if (node == j):
             continue
-        elif (nodeType != G.getNodeType(j)):
+        elif (adjMatrix[node, j] != 0) and (nodeType != G.getNodeType(j)):
             diffNeighbors += 1
     return diffNeighbors
 
@@ -28,7 +30,7 @@ def getNeighborTypeSum(G, node):
     neighborSet = G.getNeighborSet(node)
     neighborSum = 0
     for i in neighborSet:
-        neighborSum += i
+        neighborSum += G.getNodeType(i)
     return neighborSum
 
 # Glauber Dynamics 
@@ -36,21 +38,23 @@ def GlauberDynamicsDataSwitch(G, times, temperature):
     for t in times:
         u = np.random.choice(np.arange(G.nodes))
         v = np.random.choice(np.arange(G.nodes))
+
         if (G.getNodeType(u) != G.getNodeType(v)):
             # Calculates probability of switching
             exp1 = (G.getNodeType(u)*getNeighborTypeSum(G, v)) + (G.getNodeType(v)*getNeighborTypeSum(G, u)) 
             exp2 = (G.getNodeType(v)*getNeighborTypeSum(G, v)) + (G.getNodeType(u)*getNeighborTypeSum(G, u)) 
             # TODO: Calc exp3 as probability of configuration after exchanging the data
             probSwitch = exp(-temperature * exp1) / (exp(-temperature * exp2) + exp(-temperature * exp1))
+            print(f"Probability of switching: {probSwitch}")
 
             # Switches node type/data with probability probSwitch
             switch = np.random.choice([0, 1], p=[1-probSwitch, probSwitch])
             if (switch == 1):
-                G.nodeTypes[u], G.nodeTypes[v] = G.nodeTypes[v], G.nodeTypes[u]
-                # TODO: Figure out how to modify the graph's adjacency matrix
+                G.nodeTypes[u], G.nodeTypes[v] = G.nodeTypes[v], G.nodeTypes[u] # Modify the graph's node types
+                G.A[u, v], G.A[v, u] = G.A[v, u], G.A[u, v] # Modify the graph's adjacency matrix
 
         # Plot/log graph state at each iteration
-        G.plot_typed_graph(f"mixingPics/mixingGraph{t}.png")
+        G.plot_typed_graph(f"mixingPics/mixingGraph{t+1}.png")
 
 # TODO: Metropolis-Hastings
 def MetropolisHastingsDataSwitch(G, times, temperature):
@@ -61,20 +65,32 @@ def MetropolisHastingsDataSwitch(G, times, temperature):
 # MAIN
 if __name__ == "__main__":
 	# Create a typed graph object
-    G = Graph.importTypedCSV("graphData/mixingGraph.csv", [-1,1,1,-1,1,-1,-1,1])
-    G.plot_typed_graph("initialGraph.png")
+    #G = Graph.importTypedCSV("graphData/mixingGraph.csv", [-1,1,1,-1,1,-1,-1,1])
+    #G.plot_typed_graph("initialGraph.png")
     G2 = Graph.importTypedCSV("graphData/mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
-    G2.plot_typed_graph("initialGraph2.png")
+    G2.plot_typed_graph("mixingPics/mixingGraph0.png")
 
 	# Generate time points
     n = 30
     times = np.arange(n+1)
 
     # Test getDifferentNeighbors
-    print(getDifferentNeighbors(G, 5))
+    #print(getDifferentNeighbors(G2, 2))
+
+    # Test getNeighborTypeSum
+    #print(getNeighborTypeSum(G2, 5))
+
+    # Remove previous simulation pics (if any)
+    files = glob.glob('mixingPics/*')
+    for f in files:
+        os.remove(f)
 
     # Run Glauber Dynamics data switching simulation
-    GlauberDynamicsDataSwitch(G, times, 1) # TODO: What temperature to define?
+    print("Running Glauber Dynamics Algorithm...")
+    GlauberDynamicsDataSwitch(G2, times, 1) # TODO: What temperature to define?
 
     # TODO: Run Metropolis-Hastings data switching simulation
+    #print("Running Metropolis-Hastings Algorithm...")
     #MetropolisHastingsDataSwitch(G, times, 1)
+
+    print("Finished Simulations!")
