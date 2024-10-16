@@ -37,7 +37,7 @@ def getNeighborTypeSum(G, node):
 def GlauberDynamicsDataSwitch(G, times, temperature):
     for t in times:
         u = np.random.choice(np.arange(G.nodes))
-        v = np.random.choice(np.arange(G.nodes))
+        v = np.random.choice(G.getNeighborSet(u))
 
         if (G.getNodeType(u) != G.getNodeType(v)):
             # Calculates probability of switching
@@ -53,8 +53,8 @@ def GlauberDynamicsDataSwitch(G, times, temperature):
                 G.nodeTypes[u], G.nodeTypes[v] = G.nodeTypes[v], G.nodeTypes[u] # Modify the graph's node types
                 G.A[u, v], G.A[v, u] = G.A[v, u], G.A[u, v] # Modify the graph's adjacency matrix
 
-        # Plot/log graph state at each iteration
-        G.plot_typed_graph(f"mixingPics/mixingGraph{t+1}.png")
+                # Plot/log graph state at each iteration
+                G.plot_typed_graph(f"mixingPics/mixingGraph{t+1}.png")
 
 # TODO: Metropolis-Hastings
 def MetropolisHastingsDataSwitch(G, times, temperature):
@@ -64,6 +64,11 @@ def MetropolisHastingsDataSwitch(G, times, temperature):
 
 # MAIN
 if __name__ == "__main__":
+    # Remove previous simulation pics (if any)
+    files = glob.glob('mixingPics/*')
+    for f in files:
+        os.remove(f)
+
 	# Create a typed graph object
     #G = Graph.importTypedCSV("graphData/mixingGraph.csv", [-1,1,1,-1,1,-1,-1,1])
     #G.plot_typed_graph("initialGraph.png")
@@ -71,7 +76,7 @@ if __name__ == "__main__":
     G2.plot_typed_graph("mixingPics/mixingGraph0.png")
 
 	# Generate time points
-    n = 30
+    n = 500
     times = np.arange(n+1)
 
     # Test getDifferentNeighbors
@@ -80,14 +85,9 @@ if __name__ == "__main__":
     # Test getNeighborTypeSum
     #print(getNeighborTypeSum(G2, 5))
 
-    # Remove previous simulation pics (if any)
-    files = glob.glob('mixingPics/*')
-    for f in files:
-        os.remove(f)
-
     # Run Glauber Dynamics data switching simulation
     print("Running Glauber Dynamics Algorithm...")
-    GlauberDynamicsDataSwitch(G2, times, 1) # TODO: What temperature to define?
+    GlauberDynamicsDataSwitch(G2, times, 0.5) # TODO: What temperature to define?
 
     # TODO: Run Metropolis-Hastings data switching simulation
     #print("Running Metropolis-Hastings Algorithm...")
