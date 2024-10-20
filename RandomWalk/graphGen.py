@@ -38,8 +38,6 @@ def graphGen(size, sparse_connections, path="graphData/generatedDisjointGraph.cs
 		G.add_edge(n1, n2)
 
 	# Output joined graph
-	#print(color_map)
-	#print(G.nodes)
 	if (plotGraph):
 		nx.draw(G, node_color=color_map, with_labels=True)
 		plt.show()
@@ -51,17 +49,33 @@ def graphGen(size, sparse_connections, path="graphData/generatedDisjointGraph.cs
 			if (adjMatrix[i, j] != 0):
 				adjMatrix[i, j] = node_types[j]
 	graph_df = pd.DataFrame(adjMatrix)
-	graph_df.to_csv("graphData/generatedDisjointGraph.csv", header=False, index=False)
+	graph_df.to_csv(path, header=False, index=False)
 
 	# Create custom Graph object
-	GraphObj = Graph.importTypedCSV("graphData/generatedDisjointGraph.csv", node_types)
-	return GraphObj
+	GraphObj = Graph.importTypedCSV(path, node_types)
+	return GraphObj, node_types
 
 # MAIN
 if __name__ == "__main__":
-	#parser = argparse.ArgumentParser()
+	# Handles command-line arguments
+	parser = argparse.ArgumentParser(
+                    prog='GraphGen',
+                    description='Generates complete graphs for data mixing experiments')
+	parser.add_argument("size", default=20, help="Size of an individual cluster")
+	parser.add_argument("connections", default=3, help="No. of sparse connections")
+	parser.add_argument("-p", "--plot", default=False, help="Plot generated graph", action="store_true")
+	parser.add_argument("-o", "--out", default="graphData/generatedDisjointGraph.csv", help = "Output path")
 
-	size = 20
-	connections = 3
-	G = graphGen(size, connections, plotGraph=False)
-	G.plot_typed_graph()
+	# Get input variables
+	args = parser.parse_args()
+	size = int(args.size)
+	connections = int(args.connections)
+	toPlotGraph = args.plot	
+
+	# Generate graph based on parameters
+	if (args.out):
+		print(args.out)
+		G, nodeTypes = graphGen(size, connections, plotGraph=toPlotGraph, path=args.out)
+	else:
+		G, nodeTypes = graphGen(size, connections, plotGraph=toPlotGraph)
+	#G.plot_typed_graph()
