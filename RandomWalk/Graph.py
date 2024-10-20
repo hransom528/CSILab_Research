@@ -193,7 +193,7 @@ class Graph:
 		
 		# Create networkx graph
 		Graphtype = nx.Graph()
-		G = nx.from_numpy_array(self.A)
+		G = nx.from_numpy_array(self.A, create_using=nx.Graph)
 
 		# Assign node types to graph
 		color_map = []
@@ -206,7 +206,7 @@ class Graph:
 
 		# Draw the graph
 		#print(G.nodes.data())
-		nx.draw_planar(G, node_color=color_map, with_labels=True)
+		nx.draw(G, node_color=color_map, with_labels=True)
 		if (path != ""):
 			plt.savefig(path)
 		else:
