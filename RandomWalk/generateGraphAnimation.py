@@ -11,9 +11,17 @@ import re
 
 # MAIN
 if __name__ == "__main__":
+    # Set up argument parser
+    parser = argparse.ArgumentParser(
+                    prog='GenerateGraphAnimation',
+                    description='Generates gif of graph data mixing from collection of images')
+    parser.add_argument("-i", "--input", default="mixingPics/*", help="Input image directory path (e.g. 'mixingPics/*')")
+    parser.add_argument("-o", "--output", default="graphMovie.gif", help="Output gif file path (e.g. 'graphMovie.gif')")
+    args = parser.parse_args()
+
     # filepaths
-    fp_in = "mixingPics/*"
-    fp_out = "graphMovie.gif"
+    fp_in = args.input
+    fp_out = args.output
     glob_in = glob.glob(fp_in)
     glob_in.sort(key=lambda var:[int(x) if x.isdigit() else x for x in re.findall(r'[^0-9]|[0-9]+', var)])
 

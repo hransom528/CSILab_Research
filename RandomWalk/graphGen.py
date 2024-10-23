@@ -9,10 +9,9 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
 from Graph import Graph
-from DataMixing import GlauberDynamicsDataSwitch
 
 # Graph Generation Function
-def graphGen(size, sparse_connections, path="graphData/generatedDisjointGraph.csv", plotGraph=False):
+def graphGen(size=20, sparse_connections=3, path="graphData/generatedDisjointGraph.csv", plotGraph=False):
 	# Create two disjoint complete graphs and join them
 	G1 = nx.complete_graph(size)
 	G2 = nx.complete_graph(size)
@@ -26,7 +25,7 @@ def graphGen(size, sparse_connections, path="graphData/generatedDisjointGraph.cs
 		color_map[i] = 'red'
 
 	# Create sparse connections between clusters
-	for i in range(connections):
+	for i in range(sparse_connections):
 		# Randomly select a node from the first cluster
 		n1 = np.random.choice(np.arange(size))
 		
@@ -38,8 +37,9 @@ def graphGen(size, sparse_connections, path="graphData/generatedDisjointGraph.cs
 		G.add_edge(n1, n2)
 
 	# Output joined graph
+	graphLayout = nx.spring_layout(G)
 	if (plotGraph):
-		nx.draw(G, node_color=color_map, with_labels=True)
+		nx.draw(G, pos=graphLayout, node_color=color_map, with_labels=True)
 		plt.show()
 
 	# Export adjacency matrix to CSV
@@ -53,7 +53,8 @@ def graphGen(size, sparse_connections, path="graphData/generatedDisjointGraph.cs
 
 	# Create custom Graph object
 	GraphObj = Graph.importTypedCSV(path, node_types)
-	return GraphObj, node_types
+	GraphObj.layout = graphLayout
+	return GraphObj
 
 # MAIN
 if __name__ == "__main__":
@@ -75,7 +76,7 @@ if __name__ == "__main__":
 	# Generate graph based on parameters
 	if (args.out):
 		print(args.out)
-		G, nodeTypes = graphGen(size, connections, plotGraph=toPlotGraph, path=args.out)
+		G = graphGen(size, connections, plotGraph=toPlotGraph, path=args.out)
 	else:
-		G, nodeTypes = graphGen(size, connections, plotGraph=toPlotGraph)
+		G = graphGen(size, connections, plotGraph=toPlotGraph)
 	#G.plot_typed_graph()

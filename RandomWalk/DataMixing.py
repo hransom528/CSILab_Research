@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from math import exp
 from Graph import Graph
 from TVDistance import tvDistance
+from graphGen import graphGen
 
 # K(sigma, v) - Get number of different-classed neighbors for a given node
 def getDifferentNeighbors(G, node):
@@ -33,8 +34,18 @@ def getNeighborTypeSum(G, node):
         neighborSum += G.getNodeType(i)
     return neighborSum
 
+# Gets "energy" of graph (sum of products of all node pairs)
+# TODO: Fix energy calculation
+def getEnergy(G):
+    energy = 0
+    for u in range(0, G.nodes):
+        for v in range(0, G.nodes):
+            energy += G.nodeTypes[u] * G.nodeTypes[v]
+    return energy
+
 # Glauber Dynamics 
 def GlauberDynamicsDataSwitch(G, times, temperature):
+    energies = []
     for t in times:
         u = np.random.choice(np.arange(G.nodes))
         v = np.random.choice(G.getNeighborSet(u))
@@ -53,8 +64,15 @@ def GlauberDynamicsDataSwitch(G, times, temperature):
                 G.nodeTypes[u], G.nodeTypes[v] = G.nodeTypes[v], G.nodeTypes[u] # Modify the graph's node types
                 G.A[u, v], G.A[v, u] = G.A[v, u], G.A[u, v] # Modify the graph's adjacency matrix
 
+                # Log graph energy
+                
+
                 # Plot/log graph state at each iteration
+                plt.figure(f"figure{t+1}")
                 G.plot_typed_graph(f"mixingPics/mixingGraph{t+1}.png")
+                plt.close(f"figure{t+1}")
+        energies.append(getEnergy(G))
+    return energies
 
 # TODO: Metropolis-Hastings
 def MetropolisHastingsDataSwitch(G, times, temperature):
@@ -72,11 +90,14 @@ if __name__ == "__main__":
 	# Create a typed graph object
     #G = Graph.importTypedCSV("graphData/mixingGraph.csv", [-1,1,1,-1,1,-1,-1,1])
     #G.plot_typed_graph("initialGraph.png")
-    G2 = Graph.importTypedCSV("graphData/mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
-    G2.plot_typed_graph("mixingPics/mixingGraph0.png")
+    #G2 = Graph.importTypedCSV("graphData/mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
+    #G2.plot_typed_graph("mixingPics/mixingGraph0.png")
+    G3 = graphGen()
+    G3.plot_typed_graph("mixingPics/mixingGraph0.png")
 
 	# Generate time points
-    n = 500
+    n = 1000
+
     times = np.arange(n+1)
 
     # Test getDifferentNeighbors
@@ -87,7 +108,11 @@ if __name__ == "__main__":
 
     # Run Glauber Dynamics data switching simulation
     print("Running Glauber Dynamics Algorithm...")
-    GlauberDynamicsDataSwitch(G2, times, 0.5) # TODO: What temperature to define?
+    energies = GlauberDynamicsDataSwitch(G3, times, 0.1) # TODO: What temperature to define?
+    plt.figure()
+    plt.plot(times, energies)
+    plt.show()
+    # Observation: Temperature is inversely proportional to rate of switching
 
     # TODO: Run Metropolis-Hastings data switching simulation
     #print("Running Metropolis-Hastings Algorithm...")

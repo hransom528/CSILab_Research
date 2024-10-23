@@ -30,6 +30,9 @@ class Graph:
 				self.nodeTypes = nodeTypes
 			else:
 				raise ValueError("nodeTypes does not fit the dimensions of graph")
+		
+		# Plotting fields
+		self.layout = {}
 
 	# String constructor
 	def __str__(self):
@@ -206,11 +209,15 @@ class Graph:
 
 		# Draw the graph
 		#print(G.nodes.data())
-		nx.draw(G, node_color=color_map, with_labels=True)
+		if (not self.layout):
+			self.layout = nx.spring_layout(G)
+		nx.draw_networkx(G, pos=self.layout, node_color=color_map, with_labels=True)
 		if (path != ""):
 			plt.savefig(path)
+			plt.close()
 		else:
 			plt.show()
+		
 
 	# Gets transistion matrix based on graph and stationary distribution
 	def getTransistionMatrix(self, pi):
