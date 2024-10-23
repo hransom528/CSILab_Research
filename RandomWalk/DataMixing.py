@@ -43,6 +43,10 @@ def getEnergy(G):
             energy += G.nodeTypes[u] * G.nodeTypes[v]
     return energy
 
+# TODO: Gets the ratio/percentage of bad-to-good edges for data mixing
+def getEdgeRatio(G):
+    pass
+
 # Glauber Dynamics 
 def GlauberDynamicsDataSwitch(G, times, temperature):
     energies = []
