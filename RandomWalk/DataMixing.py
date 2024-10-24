@@ -94,13 +94,13 @@ if __name__ == "__main__":
 	# Create a typed graph object
     #G = Graph.importTypedCSV("graphData/mixingGraph.csv", [-1,1,1,-1,1,-1,-1,1])
     #G.plot_typed_graph("initialGraph.png")
-    #G2 = Graph.importTypedCSV("graphData/mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
+    G2 = Graph.importTypedCSV("graphData/mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
     #G2.plot_typed_graph("mixingPics/mixingGraph0.png")
     G3 = graphGen()
-    G3.plot_typed_graph("mixingPics/mixingGraph0.png")
+    #G3.plot_typed_graph("mixingPics/mixingGraph0.png")
 
 	# Generate time points
-    n = 1000
+    n = 2000
 
     times = np.arange(n+1)
 
@@ -112,10 +112,10 @@ if __name__ == "__main__":
 
     # Run Glauber Dynamics data switching simulation
     print("Running Glauber Dynamics Algorithm...")
-    energies = GlauberDynamicsDataSwitch(G3, times, 0.1) # TODO: What temperature to define?
-    plt.figure()
-    plt.plot(times, energies)
-    plt.show()
+    energies = GlauberDynamicsDataSwitch(G2, times, 0.3) # TODO: What temperature to define?
+    #plt.figure()
+    #plt.plot(times, energies)
+    #plt.show()
     # Observation: Temperature is inversely proportional to rate of switching
 
     # TODO: Run Metropolis-Hastings data switching simulation

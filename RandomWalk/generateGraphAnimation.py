@@ -37,4 +37,4 @@ if __name__ == "__main__":
 
         # https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#gif
         img.save(fp=fp_out, format='GIF', append_images=imgs,
-                save_all=True, duration=550, loop=0)
+                save_all=True, duration=300, loop=1)
