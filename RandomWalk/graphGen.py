@@ -13,8 +13,8 @@ from Graph import Graph
 # Graph Generation Function
 def graphGen(size=20, sparse_connections=3, path="graphData/generatedDisjointGraph.csv", plotGraph=False):
 	# Create two disjoint complete graphs and join them
-	G1 = nx.complete_graph(size)
-	G2 = nx.complete_graph(size)
+	G1 = nx.erdos_renyi_graph(size, 0.5)
+	G2 = nx.erdos_renyi_graph(size, 0.5)
 	G = nx.disjoint_union(G1, G2)
 
 	# Sets binary cluster types
@@ -47,7 +47,7 @@ def graphGen(size=20, sparse_connections=3, path="graphData/generatedDisjointGra
 	for i in range(0, 2*size):
 		for j in range(0, 2*size):
 			if (adjMatrix[i, j] != 0):
-				adjMatrix[i, j] = node_types[j]
+				adjMatrix[i, j] = (node_types[i] * node_types[j])
 	graph_df = pd.DataFrame(adjMatrix)
 	graph_df.to_csv(path, header=False, index=False)
 

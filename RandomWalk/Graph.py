@@ -143,9 +143,9 @@ class Graph:
 
 	# Get the degree of a node
 	def getDegree(self, node):
-		if (node < 1 or node > self.nodes):
+		if (node < 0 or node > self.nodes):
 			raise ValueError("Node out of bounds")
-		return np.sum(self.A[node-1, :])
+		return np.sum(abs(self.A[node, :]))
 
 	# Getter method for set of node neighbors
 	def getNeighborSet(self, node):
@@ -164,6 +164,18 @@ class Graph:
 			return self.nodeTypes[node]
 		else:
 			return 0
+
+	# TODO: Gets set of node neighbors that are of a different type
+	def getDifferentNeighborSet(self, node):
+		if (not self.typed):
+			raise ValueError("Graph is not typed")
+		
+		neighbors = self.getNeighborSet(node)
+		diffNeighbors = []
+		for i in range(0, len(neighbors)):
+			if self.A[node, neighbors[i]] == -1:
+				diffNeighbors.append(i)
+		return diffNeighbors
 
 	# Gets the stationary distribution of the graph
 	def getStationaryDistribution(self):
@@ -211,7 +223,7 @@ class Graph:
 		#print(G.nodes.data())
 		if (not self.layout):
 			self.layout = nx.spring_layout(G)
-		nx.draw_networkx(G, pos=self.layout, node_color=color_map, with_labels=True)
+		nx.draw_networkx(G, pos=self.layout, node_color=color_map, node_size=50, with_labels=False)
 		if (path != ""):
 			plt.savefig(path)
 			plt.close()
