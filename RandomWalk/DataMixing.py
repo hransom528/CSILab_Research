@@ -46,13 +46,33 @@ def getEnergy(G):
 def getEdgeRatio(G):
     pass 
 
-# TODO:
-# 3.# of "Good" links vs. time
+# No. of "Good" links (edges between nodes of different types)
+def getGoodLinks(G):
+    goodLinks = 0
+    for u in range(0, G.nodes):
+        for v in range(0, G.nodes):
+            if (G.A[u, v] == 1) and (G.getNodeType(u) != G.getNodeType(v)):
+                goodLinks += 1
+
+    goodLinks = goodLinks // 2
+    return goodLinks
 
 # Plots graph energy over time
 def plotEnergy(times, energies):
     plt.figure()
     plt.plot(times, energies)
+    plt.title("Graph Energy Over Time")
+    plt.xlabel("Time Steps")
+    plt.ylabel("Energy")
+    plt.show()
+
+# Plots number of good links over time
+def plotGoodLinks(times, numGoodLinks):
+    plt.figure()
+    plt.plot(times, numGoodLinks)
+    plt.title("Number of Good Links Over Time")
+    plt.xlabel("Time Steps")
+    plt.ylabel("Number of Good Links")
     plt.show()
 
 # Plots histogram of percentage of different neighbors for each node
@@ -60,7 +80,6 @@ def plotDiffHist(G, bins=20):
     percentDiffNeighbors = []
     for i in range(0, G.nodes):
         row = np.asarray(G.A[i, :]).ravel().tolist()
-        print(row)
         neighbors = G.getDegree(i)
         diffNeighbors = 0
         for j in range(0, len(row)):
@@ -70,11 +89,15 @@ def plotDiffHist(G, bins=20):
     #print(percentDiffNeighbors)
     plt.figure()
     plt.hist(percentDiffNeighbors, bins)
+    plt.title("Histogram of Percentage of Different Neighbors")
+    plt.xlabel("Percentage of Different Neighbors")
+    plt.ylabel("Frequency")
     plt.show()
         
 # Glauber Dynamics 
-def GlauberDynamicsDataSwitch(G, times, temperature):
+def GlauberDynamicsDataSwitch(G, times, temperature, plot=True):
     energies = []
+    numGoodLinks = []
     for t in times:
         u = np.random.choice(np.arange(G.nodes))
         #diffNeighbors = G.getDifferentNeighborSet(u)
@@ -102,13 +125,15 @@ def GlauberDynamicsDataSwitch(G, times, temperature):
                 G.A[v, :] *= -1
 
                 # Plot/log graph state at each iteration
-                plt.figure(f"figure{t+1}")
-                G.plot_typed_graph(f"mixingPics/mixingGraph{t+1}.png")
-                plt.close(f"figure{t+1}")
+                if (plot):
+                    plt.figure(f"figure{t+1}")
+                    G.plot_typed_graph(f"mixingPics/mixingGraph{t+1}.png")
+                    plt.close(f"figure{t+1}")
 
         # Log graph energy
         energies.append(getEnergy(G))
-    return energies
+        numGoodLinks.append(getGoodLinks(G))
+    return energies, numGoodLinks
 
 # TODO: Metropolis-Hastings
 def MetropolisHastingsDataSwitch(G, times, temperature):
@@ -132,7 +157,7 @@ if __name__ == "__main__":
     #G3.plot_typed_graph("mixingPics/mixingGraph0.png")
 
 	# Generate time points
-    n = 10000
+    n = 50000
     times = np.arange(n+1)
 
     # Test getDifferentNeighbors
@@ -143,9 +168,11 @@ if __name__ == "__main__":
 
     # Run Glauber Dynamics data switching simulation
     print("Running Glauber Dynamics Algorithm...")
-    energies = GlauberDynamicsDataSwitch(G3, times, 0.1) # TODO: What temperature to define?
+    energies, numGoodLinks = GlauberDynamicsDataSwitch(G3, times, 0.1, plot=False) # TODO: What temperature to define?
     plotEnergy(times, energies)
+    plotGoodLinks(times, numGoodLinks)
     plotDiffHist(G3)
+    G3.plot_typed_graph("finalGraph.png")
     # Observation: Temperature is inversely proportional to rate of switching
 
     # TODO: Run Metropolis-Hastings data switching simulation
