@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 from Graph import Graph
 
 # Graph Generation Function
-def graphGen(size=20, sparse_connections=3, path="graphData/generatedDisjointGraph.csv", plotGraph=False):
+def graphGen(size=20, sparse_connections=3, p=0.5, path="graphData/generatedDisjointGraph.csv", plotGraph=False):
 	# Create two disjoint complete graphs and join them
-	G1 = nx.erdos_renyi_graph(size, 0.5)
-	G2 = nx.erdos_renyi_graph(size, 0.5)
+	G1 = nx.erdos_renyi_graph(size, p)
+	G2 = nx.erdos_renyi_graph(size, p)
 	G = nx.disjoint_union(G1, G2)
 
 	# Sets binary cluster types
@@ -39,7 +39,7 @@ def graphGen(size=20, sparse_connections=3, path="graphData/generatedDisjointGra
 	# Output joined graph
 	graphLayout = nx.spring_layout(G)
 	if (plotGraph):
-		nx.draw(G, pos=graphLayout, node_color=color_map, with_labels=True)
+		nx.draw(G, pos=graphLayout, node_color=color_map, with_labels=False, node_size=40)
 		plt.show()
 
 	# Export adjacency matrix to CSV
