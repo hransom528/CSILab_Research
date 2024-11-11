@@ -143,7 +143,7 @@ class Graph:
 
 	# Get the degree of a node
 	def getDegree(self, node):
-		if (node < 0 or node > self.nodes):
+		if (node < 0 or node >= self.nodes):
 			raise ValueError("Node out of bounds")
 		return np.sum(abs(self.A[node, :]))
 
