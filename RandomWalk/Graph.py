@@ -182,7 +182,7 @@ class Graph:
 		# Get the row sums of the adjacency matrix
 		degrees = np.sum(self.A, axis=1)
 
-		edgeCount = np.sum(self.A, axis=0)
+		#edgeCount = np.sum(self.A, axis=0)
 
 		# Normalize the row sums
 		pi = degrees / (2.0 * self.edges)

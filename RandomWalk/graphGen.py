@@ -54,6 +54,7 @@ def graphGen(size=20, sparse_connections=3, p=0.5, path="graphData/generatedDisj
 	# Create custom Graph object
 	GraphObj = Graph.importTypedCSV(path, node_types)
 	GraphObj.layout = graphLayout
+	GraphObj.edges = G.number_of_edges()
 	return GraphObj
 
 # MAIN

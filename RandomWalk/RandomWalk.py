@@ -34,7 +34,7 @@ def LazyRandomWalk(G, pi):
     for i in range(0, n):
         for j in range(0, n):
             if (G.A[i, j] > 0) or (i == j):
-                Q[i, j] = 1 / (G.getDegree(i+1) + 1)
+                Q[i, j] = 1 / (G.getDegree(i) + 1)
             else:
                 Q[i, j] = 0
 
@@ -58,7 +58,7 @@ def MetropolisHastingsRandomWalk(G, pi, times):
     Q = np.zeros((n, n))
     for i in range(0, n):
         for j in range(0, n):
-            if (G.A[i, j] > 0):
+            if (G.A[i, j] != 0):
                 Q[i, j] = 1 / G.getDegree(i)
             else:
                 Q[i, j] = 0
@@ -75,7 +75,7 @@ def MetropolisHastingsRandomWalk(G, pi, times):
     for i in range(0, n):
         for j in range(0, n):
             if (i != j):
-                if (Q[i, j] > 0) and (Q[j, i] > 0):
+                if (Q[i, j] != 0) and (Q[j, i] != 0):
                     P[i, j] = Q[i, j] * min(1, (pi[j] * Q[j, i] / pi[i] * Q[i, j]))
                 else:
                     P[i, j] = 0
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     print(G)
 
     # Generate time points
-    n = 5000
+    n = 10000
     times = np.arange(n+1)
     
     # Create a stationary distribution
