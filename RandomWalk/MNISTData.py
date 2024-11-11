@@ -3,8 +3,10 @@
 
 # Imports
 import numpy as np
-import pandas as pd
+import matplotlib.pyplot as plt
+import torch
 from torchvision import datasets, transforms
+from torch.utils.data import TensorDataset, DataLoader
 
 # Define constants/parameters
 trainsetPath = 'MNIST_Data/trainset'
@@ -82,16 +84,30 @@ def loadMNISTData(trainsetPath, testsetPath):
     argSortedTrainLabels = np.argsort(selectedTrainLabels)
     argSortedTestLabels = np.argsort(selectedTestLabels)
 
-    sortedTrainImgs = np.array(selectedTrainImgs)[argSortedTrainLabels]
-    sortedTrainLabels = np.array(selectedTrainLabels)[argSortedTrainLabels]
-    sortedTestImgs = np.array(selectedTestImgs)[argSortedTestLabels]
-    sortedTestLabels = np.array(selectedTestLabels)[argSortedTestLabels]
+    sortedTrainImgs = torch.tensor(np.array(selectedTrainImgs)[argSortedTrainLabels])
+    sortedTrainLabels = torch.tensor(np.array(selectedTrainLabels)[argSortedTrainLabels])
+    sortedTestImgs = torch.tensor(np.array(selectedTestImgs)[argSortedTestLabels])
+    sortedTestLabels = torch.tensor(np.array(selectedTestLabels)[argSortedTestLabels])
+
+    trainDataset = TensorDataset(sortedTrainImgs, sortedTrainLabels)
+    testDataset = TensorDataset(sortedTestImgs, sortedTestLabels)
 
     # Export data
-    #print(type(sortedTrainImgs))
-    #print(sortedTrainImgs.shape)
-    return sortedTrainImgs, sortedTrainLabels, sortedTestImgs, sortedTestLabels
+    return trainDataset, testDataset
 
 # MAIN
 if __name__ == "__main__":
-    sortedTrainImgs, sortedTrainLabels, sortedTestImgs, sortedTestLabels = loadMNISTData(trainsetPath, testsetPath)
+    trainDataset, testDataset = loadMNISTData(trainsetPath, testsetPath)
+    trainDataloader = DataLoader(trainDataset)
+    testDataloader = DataLoader(testDataset)
+
+    # Display image and label.
+    train_features, train_labels = next(iter(trainDataloader))
+    print(f"Feature batch shape: {train_features.size()}")
+    print(f"Labels batch shape: {train_labels.size()}")
+    img = train_features[0].squeeze()
+    label = train_labels[0]
+    plt.imshow(img, cmap="gray")
+    plt.show()
+    print(f"Label: {label}")
+    
