@@ -59,14 +59,15 @@ def MetropolisHastingsRandomWalk(G, pi, times):
     for i in range(0, n):
         for j in range(0, n):
             if (G.A[i, j] > 0):
-                Q[i, j] = 1 / G.getDegree(i+1)
+                Q[i, j] = 1 / G.getDegree(i)
             else:
                 Q[i, j] = 0
 
     # 2.) Check Q for probability distribution criteria
     for i in range(0, n):
-        if (np.sum(Q[i, :]) != 1):
-            raise ValueError(f"Q[{i}, :] is not a probability distribution")
+        sumQ = np.sum(Q[i, :])
+        if (abs(sumQ - 1) > 0.05):
+            raise ValueError(f"Q[{i}, :] is not a probability distribution (sum = {sumQ})")
     #print(Q)
 
     # 3.) Calculates P from Q and pi
@@ -97,9 +98,10 @@ def MetropolisHastingsRandomWalk(G, pi, times):
         
         # Get node counts and frequencies
         unique, nodeCounts = np.unique(nodesVisited, return_counts=True)
-        frequencies = nodeCounts / t
+        frequencies = nodeCounts / (t+1)
 
         # Calculate TV distance between stationary distribution and frequencies
+        sd = G.getStationaryDistribution()
         tvDist = tvDistance(sd, frequencies)
         tvDistances.append(tvDist)
 
