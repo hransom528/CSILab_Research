@@ -21,7 +21,7 @@ from MNISTData import loadMNISTData
 
 # Imports sorted MNIST dataset
 print("Loading MNIST data...")
-trainDataset, testDataset = loadMNISTData("MNIST_Data/trainset", "MNIST_Data/testset")
+trainDataset, testDataset = loadMNISTData("MNIST_Data/trainset", "MNIST_Data/testset", train_size=1000, test_size=100)
 # Nodes 0-999 are 0, 1000-1999 are 1
 
 # Set up the basic neural network
@@ -107,37 +107,45 @@ def test_loop(dataloader, model, loss_fn):
 
 # Set up graph (Erdos–Renyi model, p=0.1, 10 sparse connections)
 print("Loading generated graph...")
-G = graphGen(1000, 10, p=0.1, path="graphData/generatedGraph.csv", plotGraph=False)
-#G = Graph.importCSV("graphData/generatedGraph.csv")
+#G = graphGen(1000, 50, p=0.1, path="graphData/generatedGraph.csv", plotGraph=False)
+G = Graph.importCSV("graphData/generatedGraph.csv")
 
 # Perform random walk of unmixed graph
 accuracies = []
-for n in range(10, 10000, 100):  
-    n = 10000
+for n in range(10, 50000, 100):  
     times = np.arange(n+1)
-    sd = G.getStationaryDistribution()
     print("Performing unmixed random walk...")
-    nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, sd, times)
-    plotTVDistances(times, tvDistances)
-    # TODO: Figure out why unmixed graph has bad plot (make it a non-lazy random walk)
+    nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, times)
+    #plotTVDistances(times, tvDistances)
 
     # TODO: Load data from nodesVisited and train/test the model
     nodesVisited = list(set(nodesVisited))
-    sampledData = []
+    sampledImgs = []
+    sampledLabels = []
     for i in nodesVisited:
         if (i > 1000):
             i = i - 1000
-        if (G.getNodeType(i) == 0):
-            sampledData.append(trainDataset[i])
+        if (G.getNodeType(i) == -1):
+            sampledImgs.append(trainDataset[i][0])
+            sampledLabels.append(trainDataset[i][1])
         else:
-            sampledData.append(trainDataset[i+1000])
-    sampledData = TensorDataset(torch.stack(sampledData))
+            sampledImgs.append(trainDataset[i+999][0])
+            sampledLabels.append(trainDataset[i+999][1])
+    sampledImgs = torch.tensor(np.array(sampledImgs))
+    sampledLabels = torch.tensor(np.array(sampledLabels))
+    sampledData = TensorDataset(sampledImgs, sampledLabels)
 
     # Train and test the model
     sampledDataloader = DataLoader(sampledData, batch_size=batch_size)
     train_loop(sampledDataloader, model, loss_fn, optimizer)
     correct, test_loss = test_loop(testDataloader, model, loss_fn)
     accuracies.append(correct) # Save results of testing
+
+# Plot unmixed accuracy vs. number of nodes visited
+plt.plot(np.arange(10, 50000, 100), accuracies)
+plt.xlabel("Number of Nodes Visited")
+plt.ylabel("Accuracy")
+plt.title("Unmixed Accuracy vs. Number of Nodes Visited")
 
 # Mix Graph
 n = 100000

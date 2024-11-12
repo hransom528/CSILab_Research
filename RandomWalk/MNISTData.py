@@ -13,7 +13,7 @@ trainsetPath = 'MNIST_Data/trainset'
 testsetPath = 'MNIST_Data/testset'
 
 # Load MNIST data and filter/sort for 0 and 1
-def loadMNISTData(trainsetPath, testsetPath):
+def loadMNISTData(trainsetPath, testsetPath, train_size=1000, test_size=100):
     # Load MNIST data
     transform = transforms.Compose([transforms.ToTensor(),
                                 transforms.Normalize((0.5,), (0.5,)),
@@ -50,7 +50,7 @@ def loadMNISTData(trainsetPath, testsetPath):
     selectedTrainLabels = []
     zeroCount = 0
     oneCount = 0
-    TRAIN_SIZE = 1000
+    TRAIN_SIZE = train_size
     for i in range(0, len(trainLabels)):
         if zeroCount < TRAIN_SIZE and trainLabels[i] == 0:
             selectedTrainImgs.append(trainSet[i])
@@ -67,7 +67,7 @@ def loadMNISTData(trainsetPath, testsetPath):
     selectedTestLabels = []
     zeroCount = 0
     oneCount = 0
-    TEST_SIZE = 100
+    TEST_SIZE = test_size
     for i in range(0, len(testLabels)):
         if zeroCount < TEST_SIZE and testLabels[i] == 0:
             selectedTestImgs.append(testSet[i])

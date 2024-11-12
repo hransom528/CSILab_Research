@@ -42,10 +42,6 @@ def getEnergy(G):
             energy += G.A[u, v]
     return (energy * 0.5)
 
-# TODO: Gets the ratio/percentage of bad-to-good edges for data mixing
-def getEdgeRatio(G):
-    pass 
-
 # No. of "Good" links (edges between nodes of different types)
 def getGoodLinks(G):
     goodLinks = 0
@@ -56,6 +52,12 @@ def getGoodLinks(G):
 
     goodLinks = goodLinks // 2
     return goodLinks
+
+# Gets the ratio/percentage of bad-to-good edges for data mixing
+def getEdgeRatio(G):
+    numGoodLinks = getGoodLinks(G)
+    numBadLinks = G.edges - numGoodLinks
+    return numBadLinks / numGoodLinks
 
 # Plots graph energy over time
 def plotEnergy(times, energies):
@@ -99,12 +101,30 @@ def GlauberDynamicsDataSwitch(G, times, temperature, plot=True):
     energies = []
     numGoodLinks = []
     for t in times:
-        u = np.random.choice(np.arange(G.nodes))
+        # Selects a random different-typed edge
+        nodeList = np.unique(np.array(np.where(G.A == -1)[0]))
+        u = np.random.choice(nodeList)
+        neighborSet = G.getNeighborSet(u)
+        v = np.random.choice(neighborSet)
+        while (G.getNodeType(u) == G.getNodeType(v)):
+            v = np.random.choice(neighborSet)
+
         #diffNeighbors = G.getDifferentNeighborSet(u)
         #if (len(diffNeighbors) == 0):
         #    continue
         #v = np.random.choice(diffNeighbors)
-        v = np.random.choice(G.getNeighborSet(u))
+        
+        # TODO: Update to choose from only good links
+        '''
+        while (G.getNodeType(u) == G.getNodeType(v)):
+            while (len(neighborSet) > 0):
+                i = np.random.choice(neighborSet)
+                neighborSet.remove(i)
+                if (G.getNodeType(i) != G.getNodeType(u)):
+                    v = i
+                    break
+            u = np.random.choice(nodeList)
+            neighborSet = G.getNeighborSet(u)'''
 
         if (G.getNodeType(u) != G.getNodeType(v)):
             # Calculates probability of switching
@@ -112,7 +132,7 @@ def GlauberDynamicsDataSwitch(G, times, temperature, plot=True):
             exp2 = (G.getNodeType(v)*getNeighborTypeSum(G, v)) + (G.getNodeType(u)*getNeighborTypeSum(G, u)) 
             exp3 = (G.getNodeType(v)*getNeighborTypeSum(G, u)) + (G.getNodeType(u)*getNeighborTypeSum(G, v)) 
             probSwitch = exp(-temperature * exp1) / (exp(-temperature * exp2) + exp(-temperature * exp3))
-            print(f"Probability of switching: {probSwitch}")
+            print(f"{t}.) Probability of switching: {probSwitch}")
 
             # Switches node type/data with probability probSwitch
             switch = np.random.choice([0, 1], p=[1-probSwitch, probSwitch])
@@ -149,15 +169,18 @@ if __name__ == "__main__":
         os.remove(f)
 
 	# Create a typed graph object
+    print("Generating Graph...")
     #G = Graph.importTypedCSV("graphData/mixingGraph.csv", [-1,1,1,-1,1,-1,-1,1])
     #G.plot_typed_graph("initialGraph.png")
-    G2 = Graph.importTypedCSV("graphData/mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
+    #G2 = Graph.importTypedCSV("graphData/mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
     #G2.plot_typed_graph("mixingPics/mixingGraph0.png")
-    G3 = graphGen(size=100, sparse_connections=10, plotGraph=False, path="graphData/mixingGraph3.csv")
+    #G3 = graphGen(size=100, sparse_connections=10, plotGraph=False, path="graphData/mixingGraph3.csv")
     #G3.plot_typed_graph("mixingPics/mixingGraph0.png")
+    G4 = graphGen(size=1000, sparse_connections=50, p=0.1, plotGraph=False, path="graphData/mixingGraph4.csv")
+    G = G4
 
 	# Generate time points
-    n = 50000
+    n = 200_000
     times = np.arange(n+1)
 
     # Test getDifferentNeighbors
@@ -168,11 +191,15 @@ if __name__ == "__main__":
 
     # Run Glauber Dynamics data switching simulation
     print("Running Glauber Dynamics Algorithm...")
-    energies, numGoodLinks = GlauberDynamicsDataSwitch(G3, times, 0.1, plot=False) # TODO: What temperature to define?
+    energies, numGoodLinks = GlauberDynamicsDataSwitch(G, times, 0.05, plot=False) # TODO: What temperature to define?
+    # (t=0.5, n = 5000 for 40 nodes)
+    # (t=0.1, n = 50000 for 100 nodes)
+    # (t=0.05, n=200000 for 1000 nodes)?
+
     plotEnergy(times, energies)
     plotGoodLinks(times, numGoodLinks)
-    plotDiffHist(G3)
-    G3.plot_typed_graph("finalGraph.png")
+    plotDiffHist(G)
+    G.plot_typed_graph("finalGraph.png")
     # Observation: Temperature is inversely proportional to rate of switching
 
     # TODO: Run Metropolis-Hastings data switching simulation

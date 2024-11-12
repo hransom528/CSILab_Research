@@ -20,8 +20,8 @@ def tvDistance(pi, mu):
 
 	# Check if the two probability distributions are the same length
 	if (len(pi) != len(mu)):
-		return 0
-		#raise ValueError("The two probability distributions must be the same length")
+		#return 0
+		raise ValueError("The two probability distributions must be the same length!")
 
 	# Iterate through the probability distributions
 	for i in range(len(pi)):

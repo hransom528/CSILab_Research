@@ -178,6 +178,7 @@ class Graph:
 		return diffNeighbors
 
 	# Gets the stationary distribution of the graph
+	# Note: This is for a simple random walk, not M.H.
 	def getStationaryDistribution(self):
 		# Get the row sums of the adjacency matrix
 		degrees = np.sum(self.A, axis=1)

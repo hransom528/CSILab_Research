@@ -27,7 +27,7 @@ def plotTVDistances(times, tvDistances):
 # G - Graph
 # pi - Stationary distribution
 # TODO: Finish this function
-def LazyRandomWalk(G, pi):
+def SimpleLazyRandomWalk(G, pi, times):
     # 1.) Get an initial proposed transition matrix
     n = G.nodes
     Q = np.zeros((n, n))
@@ -52,7 +52,7 @@ def LazyRandomWalk(G, pi):
 # Random Walk function
 # G - Graph
 # pi - Stationary distribution
-def MetropolisHastingsRandomWalk(G, pi, times):
+def MetropolisHastingsRandomWalk(G, times):
     # 1.) Get an initial proposed transition matrix
     n = G.nodes
     Q = np.zeros((n, n))
@@ -76,7 +76,7 @@ def MetropolisHastingsRandomWalk(G, pi, times):
         for j in range(0, n):
             if (i != j):
                 if (Q[i, j] != 0) and (Q[j, i] != 0):
-                    P[i, j] = Q[i, j] * min(1, (pi[j] * Q[j, i] / pi[i] * Q[i, j]))
+                    P[i, j] = Q[i, j] * min(1, (Q[j, i] / Q[i, j]))
                 else:
                     P[i, j] = 0
     for i in range(0, n):
@@ -91,6 +91,7 @@ def MetropolisHastingsRandomWalk(G, pi, times):
         if t == 0:
             currentNode = initialNode
         else:
+            #neighborSet = G.getNeighborSet(currentNode)
             currentNode = np.random.choice(np.arange(G.nodes), p=P[currentNode, :])
         
         # Add node to nodes visited
@@ -98,10 +99,13 @@ def MetropolisHastingsRandomWalk(G, pi, times):
         
         # Get node counts and frequencies
         unique, nodeCounts = np.unique(nodesVisited, return_counts=True)
-        frequencies = nodeCounts / (t+1)
+        frequencies = np.zeros(G.nodes)
+        for i in range(0, len(unique)):
+            frequencies[unique[i]] = nodeCounts[i] / (t+1)
 
         # Calculate TV distance between stationary distribution and frequencies
-        sd = G.getStationaryDistribution()
+        #sd = G.getStationaryDistribution()
+        sd = [1/G.nodes] * G.nodes
         tvDist = tvDistance(sd, frequencies)
         tvDistances.append(tvDist)
 
@@ -119,13 +123,14 @@ if __name__ == "__main__":
     n = 10000
     times = np.arange(n+1)
     
-    # Create a stationary distribution
-    sd = G.getStationaryDistribution()
+    # Create a (simple random walk) stationary distribution
+    #sd = G.getStationaryDistribution()
     #print(sd)
 
     # Perform Metropolis Hastings Random Walk
-    nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, sd, times)
-
+    nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, times)
+    #print(nodesVisited)
+    
     # Output simulation results
     #plotRandomWalk(times, nodesVisited)
     plotTVDistances(times, tvDistances)
