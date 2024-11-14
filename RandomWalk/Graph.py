@@ -82,6 +82,9 @@ class Graph:
 	# Export adjacency matrix to CSV
 	def exportCSV(self, filename):
 		pd.DataFrame(self.A).to_csv(filename, index=False, header=None)
+		if (self.typed):
+			with open(f'{filename}.types', 'w') as outfile:
+				outfile.write('\n'.join(str(i) for i in self.nodeTypes))
 
 	# Inserts a pre-defined row into the adjacency matrix
 	def insertRow(self, row, index):
@@ -165,15 +168,16 @@ class Graph:
 		else:
 			return 0
 
-	# TODO: Gets set of node neighbors that are of a different type
+	# Gets set of node neighbors that are of a different type
 	def getDifferentNeighborSet(self, node):
 		if (not self.typed):
 			raise ValueError("Graph is not typed")
 		
+		nodeType = self.getNodeType(node)
 		neighbors = self.getNeighborSet(node)
 		diffNeighbors = []
-		for i in range(0, len(neighbors)):
-			if self.A[node, neighbors[i]] == -1:
+		for i in neighbors:
+			if (self.getNodeType(i) != nodeType):
 				diffNeighbors.append(i)
 		return diffNeighbors
 

@@ -36,10 +36,10 @@ def getNeighborTypeSum(G, node):
 
 # Gets "energy" of graph (sum of products of all node pairs)
 def getEnergy(G):
-    energy = 0
-    for u in range(0, G.nodes):
-        for v in range(0, G.nodes):
-            energy += G.A[u, v]
+    energy = np.sum(G.A)
+    #for u in range(0, G.nodes):
+    #    for v in range(0, G.nodes):
+    #        energy += G.A[u, v]
     return (energy * 0.5)
 
 # No. of "Good" links (edges between nodes of different types)
@@ -69,7 +69,7 @@ def plotEnergy(times, energies):
     plt.show()
 
 # Plots number of good links over time
-def plotGoodLinks(times, numGoodLinks):
+def plotGoodLinks(G, times, numGoodLinks):
     plt.figure()
     plt.plot(times, numGoodLinks)
     plt.title("Number of Good Links Over Time")
@@ -91,30 +91,26 @@ def plotDiffHist(G, bins=20):
     #print(percentDiffNeighbors)
     plt.figure()
     plt.hist(percentDiffNeighbors, bins)
+    plt.xlim(xmin=0, xmax = 1)
     plt.title("Histogram of Percentage of Different Neighbors")
     plt.xlabel("Percentage of Different Neighbors")
     plt.ylabel("Frequency")
     plt.show()
         
 # Glauber Dynamics 
-def GlauberDynamicsDataSwitch(G, times, temperature, plot=True):
+def GlauberDynamicsDataSwitch(G, times, temperature, plot=True, samplingSize=100):
     energies = []
     numGoodLinks = []
+    sampleTimes = []
+    nodeList = np.unique(np.array(np.where(G.A == -1)[0]))
     for t in times:
         # Selects a random different-typed edge
-        nodeList = np.unique(np.array(np.where(G.A == -1)[0]))
         u = np.random.choice(nodeList)
-        neighborSet = G.getNeighborSet(u)
+        neighborSet = G.getDifferentNeighborSet(u)
         v = np.random.choice(neighborSet)
         while (G.getNodeType(u) == G.getNodeType(v)):
             v = np.random.choice(neighborSet)
-
-        #diffNeighbors = G.getDifferentNeighborSet(u)
-        #if (len(diffNeighbors) == 0):
-        #    continue
-        #v = np.random.choice(diffNeighbors)
         
-        # TODO: Update to choose from only good links
         '''
         while (G.getNodeType(u) == G.getNodeType(v)):
             while (len(neighborSet) > 0):
@@ -132,7 +128,9 @@ def GlauberDynamicsDataSwitch(G, times, temperature, plot=True):
             exp2 = (G.getNodeType(v)*getNeighborTypeSum(G, v)) + (G.getNodeType(u)*getNeighborTypeSum(G, u)) 
             exp3 = (G.getNodeType(v)*getNeighborTypeSum(G, u)) + (G.getNodeType(u)*getNeighborTypeSum(G, v)) 
             probSwitch = exp(-temperature * exp1) / (exp(-temperature * exp2) + exp(-temperature * exp3))
-            print(f"{t}.) Probability of switching: {probSwitch}")
+            
+            if (t % samplingSize == 0):
+                print(f"{t}.) Probability of switching: {probSwitch}")
 
             # Switches node type/data with probability probSwitch
             switch = np.random.choice([0, 1], p=[1-probSwitch, probSwitch])
@@ -144,16 +142,37 @@ def GlauberDynamicsDataSwitch(G, times, temperature, plot=True):
                 G.A[u, :] *= -1 
                 G.A[v, :] *= -1
 
+                # Edit nodelist to reflect changes
+                for i in range(len(G.A[u, :])):
+                    # TODO: Fix nodeList depleting itself
+                    if (i in nodeList) and (G.A[u, i] != -1) and (G.A[v, i] != -1):
+                        ind = np.where(nodeList == i)
+                        nodeList = np.delete(nodeList, ind)
+
+                    # For row u
+                    if ((not (i in nodeList)) and (G.A[u, i] == -1)):
+                        nodeList = np.append(nodeList, i)
+                    
+                    # For row v
+                    if ((not (i in nodeList)) and (G.A[v, i] == -1)):
+                        nodeList = np.append(nodeList, i)
+
                 # Plot/log graph state at each iteration
                 if (plot):
                     plt.figure(f"figure{t+1}")
                     G.plot_typed_graph(f"mixingPics/mixingGraph{t+1}.png")
                     plt.close(f"figure{t+1}")
 
-        # Log graph energy
-        energies.append(getEnergy(G))
-        numGoodLinks.append(getGoodLinks(G))
-    return energies, numGoodLinks
+        # Log graph energy every xth sample
+        if (t % samplingSize == 0):
+            sampleTimes.append(t)
+            energies.append(getEnergy(G))
+            numGoodLinks.append(getGoodLinks(G))
+        if (t == len(times)//2):
+            plt.figure("middleGraph")
+            G.plot_typed_graph("mixingPics/middleGraph.png")
+            plt.close("middleGraph")
+    return sampleTimes, energies, numGoodLinks, G
 
 # TODO: Metropolis-Hastings
 def MetropolisHastingsDataSwitch(G, times, temperature):
@@ -180,7 +199,7 @@ if __name__ == "__main__":
     G = G4
 
 	# Generate time points
-    n = 200_000
+    n = 750_000
     times = np.arange(n+1)
 
     # Test getDifferentNeighbors
@@ -191,15 +210,16 @@ if __name__ == "__main__":
 
     # Run Glauber Dynamics data switching simulation
     print("Running Glauber Dynamics Algorithm...")
-    energies, numGoodLinks = GlauberDynamicsDataSwitch(G, times, 0.05, plot=False) # TODO: What temperature to define?
+    sampleTimes, energies, numGoodLinks, MixedGraph = GlauberDynamicsDataSwitch(G, times, 0.05, plot=False, samplingSize=1000) # TODO: What temperature to define?
     # (t=0.5, n = 5000 for 40 nodes)
     # (t=0.1, n = 50000 for 100 nodes)
-    # (t=0.05, n=200000 for 1000 nodes)?
+    # (t=0.05, n=500000 for 1000 nodes)
 
-    plotEnergy(times, energies)
-    plotGoodLinks(times, numGoodLinks)
+    plotEnergy(sampleTimes, energies)
+    plotGoodLinks(G, sampleTimes, numGoodLinks)
     plotDiffHist(G)
-    G.plot_typed_graph("finalGraph.png")
+    MixedGraph.exportCSV("graphData/largeMixedGraph.csv")
+    MixedGraph.plot_typed_graph("mixingPics/finalGraph.png")
     # Observation: Temperature is inversely proportional to rate of switching
 
     # TODO: Run Metropolis-Hastings data switching simulation

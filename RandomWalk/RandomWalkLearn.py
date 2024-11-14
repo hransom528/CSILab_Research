@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
+#from torchvision import datasets, transforms
 from torch.utils.data import TensorDataset, DataLoader
 
 # Custom Imports
@@ -110,15 +110,71 @@ print("Loading generated graph...")
 #G = graphGen(1000, 50, p=0.1, path="graphData/generatedGraph.csv", plotGraph=False)
 G = Graph.importCSV("graphData/generatedGraph.csv")
 
-# Perform random walk of unmixed graph
+# Performs random walk and NN learning
+MAX_TIME = 20_000
+STEP = 500
+def randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP, batch_size=64):
+    accuracies = []
+    losses = []
+    for n in range(10, max_time, step):  
+        times = np.arange(n+1)
+        print(f"Performing unmixed random walk (n = {n})...")
+        nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, times)
+        #plotTVDistances(times, tvDistances)
+
+        # Load data from nodesVisited and train/test the model
+        nodesVisited = list(set(nodesVisited))
+        sampledImgs = []
+        sampledLabels = []
+        for i in nodesVisited:
+            if (i > 1000):
+                i = i - 1000
+            if (G.getNodeType(i) == -1):
+                sampledImgs.append(trainDataset[i][0])
+                sampledLabels.append(trainDataset[i][1])
+            else:
+                sampledImgs.append(trainDataset[i+999][0])
+                sampledLabels.append(trainDataset[i+999][1])
+        sampledImgs = torch.tensor(np.array(sampledImgs))
+        sampledLabels = torch.tensor(np.array(sampledLabels))
+        sampledData = TensorDataset(sampledImgs, sampledLabels)
+
+        # Train and test the model
+        sampledDataloader = DataLoader(sampledData, batch_size=batch_size)
+        train_loop(sampledDataloader, model, loss_fn, optimizer)
+        correct, test_loss = test_loop(testDataloader, model, loss_fn)
+        
+        accuracies.append(correct) # Save results of testing
+        losses.append(test_loss)
+    return accuracies, losses
+
+# Plots results of RWL
+def plotRWLResults(max_time, step, accuracies, losses):
+    plt.plot(np.arange(10, max_time, step), accuracies)
+    plt.ylim((0, max(accuracies)+1))
+    plt.xlabel("Number of Nodes Visited")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy vs. Number of Nodes Visited")
+    plt.show()
+
+    plt.plot(np.arange(10, max_time, step), losses)
+    plt.ylim((0, max(losses)+1))
+    plt.xlabel("Number of Nodes Visited")
+    plt.ylabel("Loss")
+    plt.title("Loss vs. Number of Nodes Visited")
+    plt.show()
+'''
 accuracies = []
-for n in range(10, 50000, 100):  
+losses = []
+MAX_TIME = 25000
+STEP = 250
+for n in range(10, MAX_TIME, STEP):  
     times = np.arange(n+1)
-    print("Performing unmixed random walk...")
+    print(f"Performing unmixed random walk (n = {n})...")
     nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, times)
     #plotTVDistances(times, tvDistances)
 
-    # TODO: Load data from nodesVisited and train/test the model
+    # Load data from nodesVisited and train/test the model
     nodesVisited = list(set(nodesVisited))
     sampledImgs = []
     sampledLabels = []
@@ -139,26 +195,52 @@ for n in range(10, 50000, 100):
     sampledDataloader = DataLoader(sampledData, batch_size=batch_size)
     train_loop(sampledDataloader, model, loss_fn, optimizer)
     correct, test_loss = test_loop(testDataloader, model, loss_fn)
+    
     accuracies.append(correct) # Save results of testing
+    losses.append(test_loss)
+'''
 
-# Plot unmixed accuracy vs. number of nodes visited
-plt.plot(np.arange(10, 50000, 100), accuracies)
+# Perform random walk of unmixed graph
+MAX_TIME = 15_000
+STEP = 500
+#accuracies, losses = randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP, batch_size=batch_size)
+
+# Save results of unmixed random walk to text files
+'''with open('graphData/unmixedAccuracies.txt', 'w') as outfile:
+  outfile.write('\n'.join(str(i) for i in accuracies))
+with open('graphData/unmixedLosses.txt', 'w') as outfile:
+  outfile.write('\n'.join(str(i) for i in losses))'''
+
+# Plot unmixed accuracy and losses vs. number of nodes visited
+'''
+plt.plot(np.arange(10, MAX_TIME, STEP), accuracies)
 plt.xlabel("Number of Nodes Visited")
 plt.ylabel("Accuracy")
 plt.title("Unmixed Accuracy vs. Number of Nodes Visited")
+plt.show()
+plt.plot(np.arange(10, MAX_TIME, STEP), losses)
+plt.xlabel("Number of Nodes Visited")
+plt.ylabel("Loss")
+plt.title("Loss vs. Number of Nodes Visited")
+plt.show()'''
+#plotRWLResults(MAX_TIME, STEP, accuracies, losses)
 
 # Mix Graph
-n = 100000
-times = np.arange(n+1)
-print("Mixing graph...")
-#energies, numGoodLinks = GlauberDynamicsDataSwitch(G, times, 0.1, plot=False)
-#plotEnergy(times, energies)
+print("Load mixing graph...")
+#n = 500_000
+#times = np.arange(n+1)
+#sampleTimes, energies, numGoodLinks, G = GlauberDynamicsDataSwitch(G, times, 0.05, plot=False, samplingSize=5000)
+#plotEnergy(sampleTimes, energies)
 #plotDiffHist(G)
-#plotGoodLinks(times, numGoodLinks)
-# TODO: plot % good links
+#plotGoodLinks(sampleTimes, numGoodLinks)
+nodeTypes = []
+with open("graphData/largeMixedGraph.csv.types") as file:
+    nodeTypes = [int(line.rstrip()) for line in file]
+G = Graph.importTypedCSV("graphData/largeMixedGraph.csv", nodeTypes)
 
 # Perform random walk of mixed graph
 print("Performing mixed random walk...")
-sd = G.getStationaryDistribution()
-#nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, sd, times)
-#plotTVDistances(times, tvDistances)
+MAX_TIME = 15_000
+STEP = 500
+accuracies, losses = randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP, batch_size=batch_size)
+plotRWLResults(MAX_TIME, STEP, accuracies, losses)
