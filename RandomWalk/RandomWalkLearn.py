@@ -206,24 +206,13 @@ STEP = 500
 accuracies, losses = randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP, batch_size=batch_size)
 
 # Save results of unmixed random walk to text files
-with open('graphData/unmixedAccuracies.txt', 'w') as outfile:
+'''with open('graphData/unmixedAccuracies.txt', 'w') as outfile:
   outfile.write('\n'.join(str(i) for i in accuracies))
 with open('graphData/unmixedLosses.txt', 'w') as outfile:
-  outfile.write('\n'.join(str(i) for i in losses))
+  outfile.write('\n'.join(str(i) for i in losses))'''
 
 # Plot unmixed accuracy and losses vs. number of nodes visited
-'''
-plt.plot(np.arange(10, MAX_TIME, STEP), accuracies)
-plt.xlabel("Number of Nodes Visited")
-plt.ylabel("Accuracy")
-plt.title("Unmixed Accuracy vs. Number of Nodes Visited")
-plt.show()
-plt.plot(np.arange(10, MAX_TIME, STEP), losses)
-plt.xlabel("Number of Nodes Visited")
-plt.ylabel("Loss")
-plt.title("Loss vs. Number of Nodes Visited")
-plt.show()'''
-#plotRWLResults(MAX_TIME, STEP, accuracies, losses)
+plotRWLResults(MAX_TIME, STEP, accuracies, losses)
 
 # Mix Graph
 print("Load mixing graph...")
@@ -234,9 +223,9 @@ print("Load mixing graph...")
 #plotDiffHist(G)
 #plotGoodLinks(sampleTimes, numGoodLinks)
 nodeTypes = []
-with open("graphData/largeMixedGraph.csv.types") as file:
+with open("graphData/largeMixedGraph2.csv.types") as file:
     nodeTypes = [int(line.rstrip()) for line in file]
-G = Graph.importTypedCSV("graphData/largeMixedGraph.csv", nodeTypes)
+G = Graph.importTypedCSV("graphData/largeMixedGraph2.csv", nodeTypes)
 
 # Perform random walk of mixed graph
 print("Performing mixed random walk...")
