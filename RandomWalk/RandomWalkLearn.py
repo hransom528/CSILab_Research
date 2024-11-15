@@ -151,14 +151,14 @@ def randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, 
 # Plots results of RWL
 def plotRWLResults(max_time, step, accuracies, losses):
     plt.plot(np.arange(10, max_time, step), accuracies)
-    plt.ylim((0, max(accuracies)+1))
+    plt.ylim((0, 1))
     plt.xlabel("Number of Nodes Visited")
     plt.ylabel("Accuracy")
     plt.title("Accuracy vs. Number of Nodes Visited")
     plt.show()
 
     plt.plot(np.arange(10, max_time, step), losses)
-    plt.ylim((0, max(losses)+1))
+    plt.ylim((0, 1))
     plt.xlabel("Number of Nodes Visited")
     plt.ylabel("Loss")
     plt.title("Loss vs. Number of Nodes Visited")
@@ -201,15 +201,15 @@ for n in range(10, MAX_TIME, STEP):
 '''
 
 # Perform random walk of unmixed graph
-MAX_TIME = 15_000
+MAX_TIME = 20_000
 STEP = 500
-#accuracies, losses = randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP, batch_size=batch_size)
+accuracies, losses = randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP, batch_size=batch_size)
 
 # Save results of unmixed random walk to text files
-'''with open('graphData/unmixedAccuracies.txt', 'w') as outfile:
+with open('graphData/unmixedAccuracies.txt', 'w') as outfile:
   outfile.write('\n'.join(str(i) for i in accuracies))
 with open('graphData/unmixedLosses.txt', 'w') as outfile:
-  outfile.write('\n'.join(str(i) for i in losses))'''
+  outfile.write('\n'.join(str(i) for i in losses))
 
 # Plot unmixed accuracy and losses vs. number of nodes visited
 '''
@@ -240,7 +240,13 @@ G = Graph.importTypedCSV("graphData/largeMixedGraph.csv", nodeTypes)
 
 # Perform random walk of mixed graph
 print("Performing mixed random walk...")
-MAX_TIME = 15_000
+MAX_TIME = 20_000
 STEP = 500
 accuracies, losses = randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP, batch_size=batch_size)
 plotRWLResults(MAX_TIME, STEP, accuracies, losses)
+
+# Save results of unmixed random walk to text files
+with open('graphData/mixedAccuracies.txt', 'w') as outfile:
+  outfile.write('\n'.join(str(i) for i in accuracies))
+with open('graphData/mixedLosses.txt', 'w') as outfile:
+  outfile.write('\n'.join(str(i) for i in losses))

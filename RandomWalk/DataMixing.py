@@ -70,9 +70,12 @@ def plotEnergy(times, energies):
 
 # Plots number of good links over time
 def plotGoodLinks(G, times, numGoodLinks):
+    numGoodLinks = np.array(numGoodLinks)
+    print(f"Total edges: {G.edges}")
+    print(f"Total good links: {np.max(numGoodLinks)}")
     plt.figure()
-    plt.plot(times, numGoodLinks)
-    plt.title("Number of Good Links Over Time")
+    plt.plot(times, numGoodLinks / G.edges)
+    plt.title("Percent of Good Links Over Time")
     plt.xlabel("Time Steps")
     plt.ylabel("Number of Good Links")
     plt.show()
@@ -85,13 +88,13 @@ def plotDiffHist(G, bins=20):
         neighbors = G.getDegree(i)
         diffNeighbors = 0
         for j in range(0, len(row)):
-            if (row[j] !=0) and (G.getNodeType(i) != G.getNodeType(j)):
+            if (row[j] != 0) and (G.getNodeType(i) != G.getNodeType(j)):
                 diffNeighbors += 1
         percentDiffNeighbors.append(diffNeighbors / neighbors)
     #print(percentDiffNeighbors)
     plt.figure()
     plt.hist(percentDiffNeighbors, bins)
-    plt.xlim(xmin=0, xmax = 1)
+    plt.xlim(xmin=-0.05, xmax = 1.000)
     plt.title("Histogram of Percentage of Different Neighbors")
     plt.xlabel("Percentage of Different Neighbors")
     plt.ylabel("Frequency")
@@ -198,8 +201,12 @@ if __name__ == "__main__":
     G4 = graphGen(size=1000, sparse_connections=50, p=0.1, plotGraph=False, path="graphData/mixingGraph4.csv")
     G = G4
 
+    # Create initial figures
+    G.plot_typed_graph("mixingPics/startGraph.png")
+    plotDiffHist(G, bins=5)
+
 	# Generate time points
-    n = 750_000
+    n = 1_000_000
     times = np.arange(n+1)
 
     # Test getDifferentNeighbors
@@ -210,14 +217,14 @@ if __name__ == "__main__":
 
     # Run Glauber Dynamics data switching simulation
     print("Running Glauber Dynamics Algorithm...")
-    sampleTimes, energies, numGoodLinks, MixedGraph = GlauberDynamicsDataSwitch(G, times, 0.05, plot=False, samplingSize=1000) # TODO: What temperature to define?
+    sampleTimes, energies, numGoodLinks, MixedGraph = GlauberDynamicsDataSwitch(G, times, 0.05, plot=False, samplingSize=5000) # TODO: What temperature to define?
     # (t=0.5, n = 5000 for 40 nodes)
     # (t=0.1, n = 50000 for 100 nodes)
-    # (t=0.05, n=500000 for 1000 nodes)
+    # (t=0.05, n=750_000,sample=1000 for 1000 nodes)
 
     plotEnergy(sampleTimes, energies)
-    plotGoodLinks(G, sampleTimes, numGoodLinks)
-    plotDiffHist(G)
+    plotGoodLinks(MixedGraph, sampleTimes, numGoodLinks)
+    plotDiffHist(MixedGraph)
     MixedGraph.exportCSV("graphData/largeMixedGraph.csv")
     MixedGraph.plot_typed_graph("mixingPics/finalGraph.png")
     # Observation: Temperature is inversely proportional to rate of switching
