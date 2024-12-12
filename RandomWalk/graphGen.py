@@ -55,6 +55,15 @@ def graphGen(size=20, sparse_connections=3, p=0.5, path="graphData/generatedDisj
 	GraphObj = Graph.importTypedCSV(path, node_types)
 	GraphObj.layout = graphLayout
 	GraphObj.edges = G.number_of_edges()
+
+	# Export node types to file
+	with open(path+".types", "w") as output:
+		outStr = str(node_types)
+		outStr = outStr.replace("[", "")
+		outStr = outStr.replace("]", "")
+		output.write(outStr)
+
+	# Return custom graph object
 	return GraphObj
 
 # MAIN

@@ -16,7 +16,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from Graph import Graph
 from graphGen import graphGen
 from TVDistance import tvDistance
-from RandomWalk import MetropolisHastingsRandomWalk, plotTVDistances
+from RandomWalk import MetropolisHastingsRandomWalk, plotTVDistances, plotRandomWalk
 from DataMixing import GlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks
 from MNISTData import loadMNISTData
 
@@ -35,9 +35,10 @@ class NeuralNetwork(nn.Module):
         self.linear_relu_stack = nn.Sequential(
             nn.Linear(in_features=28*28, out_features=512),
             nn.ReLU(),
-            #nn.Linear(512, 512),
-            #nn.ReLU(),
-            nn.Linear(512, 2),
+            nn.Linear(512, 512),
+            nn.ReLU(),
+            nn.Linear(512, 1),
+            nn.Sigmoid()
         )
 
     def forward(self, x):
@@ -47,8 +48,8 @@ class NeuralNetwork(nn.Module):
 
 # Hyperparameters
 print("Setting up neural network...")
-learning_rate = 1e-3
-batch_size = 64
+learning_rate = 0.1
+batch_size = 1
 epochs = 5
 #trainDataloader = DataLoader(trainDataset, batch_size=batch_size)
 testDataloader = DataLoader(testDataset, batch_size=batch_size)
@@ -61,10 +62,12 @@ device = (
 )
 print(f"Using {device} device for training.")
 model = NeuralNetwork().to(device)
-loss_fn = nn.CrossEntropyLoss() # Initialize the loss function
+#loss_fn = nn.CrossEntropyLoss() # Initialize the loss function
+loss_fn = nn.BCELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 # Train the model
+# See: https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
 def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
@@ -73,8 +76,6 @@ def train_loop(dataloader, model, loss_fn, optimizer):
     for batch, (X, y) in enumerate(dataloader):
         # Compute prediction and loss
         pred = model(X)
-        print(X)
-        print(y)
         loss = loss_fn(pred, y)
 
         # Backpropagation
@@ -100,9 +101,15 @@ def test_loop(dataloader, model, loss_fn):
     # also serves to reduce unnecessary gradient computations and memory usage for tensors with requires_grad=True
     with torch.no_grad():
         for X, y in dataloader:
-            pred = model(X)
+            pred = torch.squeeze(model(X))
+            y = y.squeeze().type(torch.float)
             test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+
+            # Round predicition and y to ints
+            pred = torch.round(pred)
+            y = torch.round(y)
+
+            correct += (pred == y).type(torch.float).sum().item()
 
     test_loss /= num_batches
     correct /= size
@@ -111,61 +118,88 @@ def test_loop(dataloader, model, loss_fn):
 
 # Set up unmixed graph (Erdos–Renyi model, p=0.1, 10 sparse connections)
 print("Loading generated graph...")
-loadPregen = False
+loadPregen = True
 if (loadPregen):
-    UNMIXED_PATH = "graphData/generatedGraph.csv"
+    UNMIXED_PATH = "graphData/generatedGraph2.csv"
     UNMIXED_TYPES = UNMIXED_PATH + ".types"
-    G = Graph.importCSV(UNMIXED_PATH, UNMIXED_TYPES) # TODO: Change this to importTypedCSV
+    with open(UNMIXED_TYPES, "r") as typeFile:
+        typeList = list(map(int, typeFile.readline().split(",")))
+    G = Graph.importTypedCSV(UNMIXED_PATH, typeList)
 else:
-    G = graphGen(SIZE, int(SIZE*0.05), p=0.1, path="graphData/generatedGraph2.csv", plotGraph=False)
+    G = graphGen(SIZE, int(SIZE*0.05), p=0.1, path="graphData/generatedGraph2.csv", plotGraph=True)
 
 # Performs random walk and NN learning on graph
-def randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time, step, batch_size=64):
+def randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time, step):
     accuracies = []
     losses = []
-    for n in range(10, max_time, step):  
-        times = np.arange(n+1)
-        print(f"Performing unmixed random walk (n = {n})...")
-        nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, times)
-        #plotTVDistances(times, tvDistances)
+    times = np.arange(max_time+1)
+    print(f"Performing unmixed random walk (n = {max_time})...")
+    nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, times)
+    #plotTVDistances(times, tvDistances)
 
-        # Load data from nodesVisited and train/test the model
-        nodesVisited = list(set(nodesVisited))
-        sampledImgs = []
-        sampledLabels = []
-        CLUSTER_SIZE = G.nodes // 2
-        for i in nodesVisited:
-            if (i > CLUSTER_SIZE):
-                i = i - CLUSTER_SIZE
-            if (G.getNodeType(i) == -1):
-                sampledImgs.append(trainDataset[i][0])
-                sampledLabels.append(trainDataset[i][1])
-            else:
-                sampledImgs.append(trainDataset[i+(CLUSTER_SIZE-1)][0])
-                sampledLabels.append(trainDataset[i+(CLUSTER_SIZE-1)][1])
-        sampledImgs = torch.tensor(np.array(sampledImgs))
-        sampledLabels = torch.tensor(np.array(sampledLabels)).type(torch.long)
-        sampledData = TensorDataset(sampledImgs, sampledLabels)
+    # Plot random walk path
+    nodeTypes = []
+    for i in nodesVisited:
+        nodeType = G.getNodeType(i)
+        nodeTypes.append(nodeType)
+    plotRandomWalk(times, nodeTypes)
 
-        # Train and test the model
-        sampledDataloader = DataLoader(sampledData, batch_size=batch_size)
-        train_loop(sampledDataloader, model, loss_fn, optimizer)
-        correct, test_loss = test_loop(testDataloader, model, loss_fn)
-        
-        accuracies.append(correct) # Save results of testing
-        losses.append(test_loss)
-    return accuracies, losses
+    # Load data from nodesVisited and train/test the model
+    #nodesVisited = list(nodesVisited)
+    CLUSTER_SIZE = G.nodes // 2
+    runningLoss = 0.0
+    runningLossVals = []
+    
+    for i in range(0, len(nodesVisited)):
+        # Get typed data from node
+        nodeVisited = nodesVisited[i]
+        if (nodeTypes[i] == -1):
+            sampledImg = trainDataset[nodeVisited][0]
+            sampledLabel = trainDataset[nodeVisited][1]
+        else:
+            sampledImg = trainDataset[nodeVisited+(CLUSTER_SIZE-1)][0]
+            sampledLabel = trainDataset[nodeVisited+(CLUSTER_SIZE-1)][1]
+        sampledLabel = sampledLabel.type(torch.float)
+
+        # Train the model off of new datapoint
+        # See: https://pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html
+        #logits = model(sampledImg)
+        #pred_prob = nn.Softmax(dim=1)(logits)
+        #pred = pred_prob.argmax(1).squeeze().type(torch.float)
+        model.train()
+        pred = torch.squeeze(model(sampledImg))
+
+        # TODO: Reset weights between random walks
+        #print(pred, sampledLabel)
+        #print(pred.shape, sampledLabel.shape)
+        loss = loss_fn(pred, sampledLabel) # Loss function calculation
+        #loss.requires_grad = True
+        loss.backward() # Backpropagation
+        optimizer.step()
+        runningLoss += loss.item()
+        runningLossVals.append(runningLoss)
+        #print(f"Running loss: {runningLoss}")
+        optimizer.zero_grad()
+
+        # Test the model
+        if (i % step == 0):
+            correct, test_loss = test_loop(testDataloader, model, loss_fn)
+            accuracies.append(correct) # Save results of testing
+            losses.append(test_loss)
+    plotRWLResults(max_time, step, accuracies, losses)
+    return accuracies, losses, runningLossVals
 
 # Plots results of RWL
 def plotRWLResults(max_time, step, accuracies, losses):
-    plt.plot(np.arange(10, max_time, step), accuracies)
+    times = np.arange(0, max_time+1, step)
+    plt.plot(times, accuracies)
     plt.ylim((0, 1))
     plt.xlabel("Number of Nodes Visited")
     plt.ylabel("Accuracy")
     plt.title("Accuracy vs. Number of Nodes Visited")
     plt.show()
 
-    plt.plot(np.arange(10, max_time, step), losses)
+    plt.plot(times, losses)
     plt.ylim((0, 1))
     plt.xlabel("Number of Nodes Visited")
     plt.ylabel("Loss")
@@ -175,15 +209,16 @@ def plotRWLResults(max_time, step, accuracies, losses):
 # Perform random walk of unmixed graph
 print("Performing unmixed random walks...")
 MAX_TIME = 20_000
-STEP = 500
-EPOCHS = 1
+STEP = 100
+EPOCHS = 5
 accuracyMatrix = []
 lossMatrix = []
 for i in range(EPOCHS):
-    accuracies, losses = randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP, batch_size=batch_size)
+    accuracies, losses, runningLossVals = randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP)
     accuracyMatrix.append(accuracies)
     lossMatrix.append(losses)
 accuracyMatrix = np.array(accuracyMatrix)
+print(accuracyMatrix.shape)
 lossMatrix = np.array(lossMatrix)
 if (EPOCHS == 1):
     averageAccuracies = accuracyMatrix
@@ -200,6 +235,7 @@ with open('graphData/unmixedLosses.txt', 'w') as outfile:
   outfile.write('\n'.join(str(i) for i in losses))'''
 
 # Plot unmixed accuracy and losses vs. number of nodes visited
+print(averageAccuracies)
 plotRWLResults(MAX_TIME, STEP, averageAccuracies, averageLosses)
 
 # Mix Graph
@@ -226,7 +262,7 @@ print("Performing mixed random walk...")
 accuracyMatrix = []
 lossMatrix = []
 for i in range(EPOCHS):
-    accuracies, losses = randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP, batch_size=batch_size)
+    accuracies, losses = randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time=MAX_TIME, step=STEP)
     accuracyMatrix.append(accuracies)
     lossMatrix.append(losses)
 accuracyMatrix = np.array(accuracyMatrix)
