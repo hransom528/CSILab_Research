@@ -87,7 +87,7 @@ def loadMNISTData(trainsetPath, testsetPath, train_size=1000, test_size=100):
     sortedTrainImgs = torch.tensor(np.array(selectedTrainImgs)[argSortedTrainLabels])
     sortedTrainLabels = torch.tensor(np.array(selectedTrainLabels)[argSortedTrainLabels])
     sortedTestImgs = torch.tensor(np.array(selectedTestImgs)[argSortedTestLabels])
-    sortedTestLabels = torch.tensor(np.array(selectedTestLabels)[argSortedTestLabels])
+    sortedTestLabels = torch.tensor(np.array(selectedTestLabels)[argSortedTestLabels]).type(torch.long)
 
     trainDataset = TensorDataset(sortedTrainImgs, sortedTrainLabels)
     testDataset = TensorDataset(sortedTestImgs, sortedTestLabels)

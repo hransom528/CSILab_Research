@@ -171,7 +171,7 @@ def GlauberDynamicsDataSwitch(G, times, temperature, plot=True, samplingSize=100
             sampleTimes.append(t)
             energies.append(getEnergy(G))
             numGoodLinks.append(getGoodLinks(G))
-        if (t == len(times)//2):
+        if (t == len(times)//4):
             plt.figure("middleGraph")
             G.plot_typed_graph("mixingPics/middleGraph.png")
             plt.close("middleGraph")
@@ -196,17 +196,17 @@ if __name__ == "__main__":
     #G.plot_typed_graph("initialGraph.png")
     #G2 = Graph.importTypedCSV("graphData/mixingGraph2.csv", [1, 1, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1, -1, -1])
     #G2.plot_typed_graph("mixingPics/mixingGraph0.png")
-    #G3 = graphGen(size=100, sparse_connections=10, plotGraph=False, path="graphData/mixingGraph3.csv")
+    G3 = graphGen(size=100, sparse_connections=10, plotGraph=False, path="graphData/mixingGraph3.csv")
     #G3.plot_typed_graph("mixingPics/mixingGraph0.png")
-    G4 = graphGen(size=1000, sparse_connections=50, p=0.1, plotGraph=False, path="graphData/mixingGraph4.csv")
-    G = G4
+    #G4 = graphGen(size=1000, sparse_connections=50, p=0.1, plotGraph=False, path="graphData/mixingGraph4.csv")
+    G = G3
 
     # Create initial figures
     G.plot_typed_graph("mixingPics/startGraph.png")
     plotDiffHist(G, bins=5)
 
 	# Generate time points
-    n = 1_000_000
+    n = 100_000
     times = np.arange(n+1)
 
     # Test getDifferentNeighbors
@@ -217,7 +217,8 @@ if __name__ == "__main__":
 
     # Run Glauber Dynamics data switching simulation
     print("Running Glauber Dynamics Algorithm...")
-    sampleTimes, energies, numGoodLinks, MixedGraph = GlauberDynamicsDataSwitch(G, times, 0.05, plot=False, samplingSize=5000) # TODO: What temperature to define?
+    sampleTimes, energies, numGoodLinks, MixedGraph = GlauberDynamicsDataSwitch(G, times, 0.1, plot=False, samplingSize=10)
+    # TODO: What temperature to define?
     # (t=0.5, n = 5000 for 40 nodes)
     # (t=0.1, n = 50000 for 100 nodes)
     # (t=0.05, n=750_000,sample=1000 for 1000 nodes)

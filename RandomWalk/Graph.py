@@ -166,7 +166,7 @@ class Graph:
 				raise ValueError("Node value out of bounds")
 			return self.nodeTypes[node]
 		else:
-			return 0
+			raise ValueError("Graph is not typed")
 
 	# Gets set of node neighbors that are of a different type
 	def getDifferentNeighborSet(self, node):
