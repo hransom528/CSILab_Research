@@ -6,11 +6,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-from torch import nn
+from torch import nn, Tensor
 from torch.utils.data import DataLoader
 #from torchvision import datasets, transforms
 from torch.utils.data import TensorDataset, DataLoader
-# TODO: Set up argparse
+# import argparse TODO: Set up argparse
 
 # Custom Imports
 from Graph import Graph
@@ -22,12 +22,15 @@ from MNISTData import loadMNISTData
 
 # Imports sorted MNIST dataset
 print("Loading MNIST data...")
-SIZE = 100
-TEST_SIZE = SIZE // 10
-trainDataset, testDataset = loadMNISTData("MNIST_Data/trainset", "MNIST_Data/testset", train_size=SIZE, test_size=TEST_SIZE)
-# Nodes 0-999 are 0, 1000-1999 are 1
+SIZE = 50
+if (SIZE % 2 != 0):
+    raise ValueError("Size is not evenly divisible by 2!")
+TEST_SIZE = SIZE // 5
+batch_size = 1
+trainDataset, trainDataloader, testDataloader = loadMNISTData("MNIST_Data/trainset", "MNIST_Data/testset", train_size=SIZE, test_size=TEST_SIZE, batch_size=batch_size)
 
 # Set up the basic neural network
+LEARNING_RATE = 0.1
 class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
@@ -46,13 +49,20 @@ class NeuralNetwork(nn.Module):
         logits = self.linear_relu_stack(x)
         return logits
 
+# Alternatively: Logisitic Regression
+class Logistic_Loss(torch.nn.Module):
+    def __init__(self):
+        super(Logistic_Loss, self).__init__()
+
+    def forward(self, inputs, target):
+        L = torch.log(1 + torch.exp(-target*inputs.t()))
+        return torch.mean(L)
+#model = nn.Linear(28*28, 1)
+#criterion = Logistic_Loss()
+#optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE, momentum=0.9)
+
 # Hyperparameters
 print("Setting up neural network...")
-learning_rate = 0.1
-batch_size = 1
-epochs = 5
-#trainDataloader = DataLoader(trainDataset, batch_size=batch_size)
-testDataloader = DataLoader(testDataset, batch_size=batch_size)
 device = (
     "cuda"
     if torch.cuda.is_available()
@@ -64,10 +74,11 @@ print(f"Using {device} device for training.")
 model = NeuralNetwork().to(device)
 #loss_fn = nn.CrossEntropyLoss() # Initialize the loss function
 loss_fn = nn.BCELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
 
 # Train the model
 # See: https://pytorch.org/tutorials/beginner/basics/optimization_tutorial.html
+'''
 def train_loop(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     # Set the model to training mode - important for batch normalization and dropout layers
@@ -87,7 +98,8 @@ def train_loop(dataloader, model, loss_fn, optimizer):
             loss, current = loss.item(), batch * batch_size + len(X)
             #print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
             return loss, current
-
+'''
+            
 # Test the model
 def test_loop(dataloader, model, loss_fn):
     # Set the model to evaluation mode - important for batch normalization and dropout layers
@@ -118,7 +130,7 @@ def test_loop(dataloader, model, loss_fn):
 
 # Set up unmixed graph (Erdos–Renyi model, p=0.1, 10 sparse connections)
 print("Loading generated graph...")
-loadPregen = True
+loadPregen = False
 if (loadPregen):
     UNMIXED_PATH = "graphData/generatedGraph2.csv"
     UNMIXED_TYPES = UNMIXED_PATH + ".types"
@@ -126,12 +138,14 @@ if (loadPregen):
         typeList = list(map(int, typeFile.readline().split(",")))
     G = Graph.importTypedCSV(UNMIXED_PATH, typeList)
 else:
-    G = graphGen(SIZE, int(SIZE*0.05), p=0.1, path="graphData/generatedGraph2.csv", plotGraph=True)
+    G = graphGen(SIZE // 2, int(SIZE*0.05), p=0.15, path="graphData/generatedGraph2.csv", plotGraph=True)
 
 # Performs random walk and NN learning on graph
 def randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, max_time, step):
     accuracies = []
     losses = []
+
+    # Perform random walk
     times = np.arange(max_time+1)
     print(f"Performing unmixed random walk (n = {max_time})...")
     nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, times)
@@ -142,14 +156,10 @@ def randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, 
     for i in nodesVisited:
         nodeType = G.getNodeType(i)
         nodeTypes.append(nodeType)
-    plotRandomWalk(times, nodeTypes)
+    #plotRandomWalk(times, nodeTypes)
 
     # Load data from nodesVisited and train/test the model
-    #nodesVisited = list(nodesVisited)
     CLUSTER_SIZE = G.nodes // 2
-    runningLoss = 0.0
-    runningLossVals = []
-    
     for i in range(0, len(nodesVisited)):
         # Get typed data from node
         nodeVisited = nodesVisited[i]
@@ -159,7 +169,10 @@ def randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, 
         else:
             sampledImg = trainDataset[nodeVisited+(CLUSTER_SIZE-1)][0]
             sampledLabel = trainDataset[nodeVisited+(CLUSTER_SIZE-1)][1]
-        sampledLabel = sampledLabel.type(torch.float)
+
+        # Convert label to +1/-1
+        #sampledLabel = Tensor(sampledLabel).reshape([1])
+        sampledLabel = Tensor([(2 * (sampledLabel - 0.5))])
 
         # Train the model off of new datapoint
         # See: https://pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html
@@ -167,20 +180,14 @@ def randomWalkLearn(G, trainDataset, testDataloader, model, loss_fn, optimizer, 
         #pred_prob = nn.Softmax(dim=1)(logits)
         #pred = pred_prob.argmax(1).squeeze().type(torch.float)
         model.train()
-        pred = torch.squeeze(model(sampledImg))
+        optimizer.zero_grad()
+        pred = (model(sampledImg))
+        loss = loss_fn(pred, sampledLabel) # Loss function calculation
 
         # TODO: Reset weights between random walks
-        #print(pred, sampledLabel)
-        #print(pred.shape, sampledLabel.shape)
-        loss = loss_fn(pred, sampledLabel) # Loss function calculation
-        #loss.requires_grad = True
         loss.backward() # Backpropagation
         optimizer.step()
-        runningLoss += loss.item()
-        runningLossVals.append(runningLoss)
-        #print(f"Running loss: {runningLoss}")
-        optimizer.zero_grad()
-
+        
         # Test the model
         if (i % step == 0):
             correct, test_loss = test_loop(testDataloader, model, loss_fn)
@@ -208,8 +215,8 @@ def plotRWLResults(max_time, step, accuracies, losses):
 
 # Perform random walk of unmixed graph
 print("Performing unmixed random walks...")
-MAX_TIME = 20_000
-STEP = 100
+MAX_TIME = SIZE * 100
+STEP = SIZE / 10
 EPOCHS = 5
 accuracyMatrix = []
 lossMatrix = []
@@ -249,13 +256,12 @@ if (loadPremixed):
         nodeTypes = [int(line.rstrip()) for line in file]
     G = Graph.importTypedCSV(MIXED_PATH, nodeTypes)
 else:
-    n = 100_000
+    n = 10_000
     times = np.arange(n+1)
-    sampleTimes, energies, numGoodLinks, G = GlauberDynamicsDataSwitch(G, times, 0.05, plot=False, samplingSize=100)
+    sampleTimes, energies, numGoodLinks, G = GlauberDynamicsDataSwitch(G, times, 0.05, plot=False, samplingSize=1)
     #plotEnergy(sampleTimes, energies)
     #plotDiffHist(G)
     #plotGoodLinks(sampleTimes, numGoodLinks)
-
 
 # Perform random walk of mixed graph
 print("Performing mixed random walk...")
@@ -280,3 +286,5 @@ with open('graphData/mixedAccuracies.txt', 'w') as outfile:
   outfile.write('\n'.join(str(i) for i in averageAccuracies))
 with open('graphData/mixedLosses.txt', 'w') as outfile:
   outfile.write('\n'.join(str(i) for i in averageLosses))
+
+# TODO: Dunder main

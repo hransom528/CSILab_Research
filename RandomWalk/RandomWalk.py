@@ -110,7 +110,7 @@ def MetropolisHastingsRandomWalk(G, times):
         tvDistances.append(tvDist)
 
     # Return output
-    return nodesVisited, P, tvDistances
+    return nodesVisited, P, tvDistances, 
 
 # MAIN
 if __name__ == "__main__":

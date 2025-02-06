@@ -6,13 +6,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 from torchvision import datasets, transforms
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import TensorDataset, DataLoader, SubsetRandomSampler, Subset
 
 # Define constants/parameters
 trainsetPath = 'MNIST_Data/trainset'
 testsetPath = 'MNIST_Data/testset'
 
 # Load MNIST data and filter/sort for 0 and 1
+'''
 def loadMNISTData(trainsetPath, testsetPath, train_size=1000, test_size=100):
     # Load MNIST data
     transform = transforms.Compose([transforms.ToTensor(),
@@ -94,6 +95,48 @@ def loadMNISTData(trainsetPath, testsetPath, train_size=1000, test_size=100):
 
     # Export data
     return trainDataset, testDataset
+'''
+
+# Load binary MNIST data
+# Source: https://github.com/ddepe/MNIST-Binary-Classification-using-Pytorch/blob/master/Logistic_Regression.py
+def loadMNISTData(trainsetPath, testsetPath, train_size=1000, test_size=100, batch_size=1):
+    # Get training dataset
+    train_data = datasets.MNIST(trainsetPath, train=True, download=True,
+                            transform=transforms.Compose([
+                                transforms.ToTensor(),
+                                transforms.Normalize((0.1307,), (0.3081,))
+                            ]))
+    subset_indices = ((train_data.train_labels == 0) + (train_data.train_labels == 1)).nonzero().view(-1)
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=False,
+                                           sampler=SubsetRandomSampler(subset_indices))
+
+    counter0 = 0
+    counter1 = 0
+    index = 0
+    subset_indices = []
+    while (counter0 < train_size // 2):
+        if (train_data.targets[index] == 0):
+            counter0 += 1 
+            subset_indices.append(index)
+        index += 1
+    while (counter1 < train_size // 2):
+        if (train_data.targets[index] == 1):
+            counter1 += 1
+            subset_indices.append(index)
+        index += 1
+    train_dataset = Subset(train_data, subset_indices)
+
+    # Get test data into dataloader
+    test_data = datasets.MNIST(testsetPath, train=False, download=True,
+                           transform=transforms.Compose([
+                               transforms.ToTensor(),
+                               transforms.Normalize((0.1307,), (0.3081,))
+                           ]))
+    subset_indices = ((test_data.targets == 0) + (test_data.targets == 1)).nonzero().view(-1)[:test_size]
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=False,
+                                          sampler=SubsetRandomSampler(subset_indices))
+    
+    return train_dataset, train_loader, test_loader
 
 # MAIN
 if __name__ == "__main__":
