@@ -52,7 +52,7 @@ def SimpleLazyRandomWalk(G, pi, times):
 # Random Walk function
 # G - Graph
 # pi - Stationary distribution
-def MetropolisHastingsRandomWalk(G, times):
+def MetropolisHastingsRandomWalk(G, times, startNode=-1):
     # 1.) Get an initial proposed transition matrix
     n = G.nodes
     Q = np.zeros((n, n))
@@ -85,15 +85,25 @@ def MetropolisHastingsRandomWalk(G, times):
     # 4.) Perform Metropolis-Hastings Random Walk
     nodesVisited = []
     tvDistances = []
-    initialNode = np.random.choice(G.nodes) # Randomly choose initial node
+    if (startNode != -1):
+        initialNode = np.random.choice(G.nodes) # Randomly choose initial node
+    else:
+        initialNode = startNode
+
     for t in times:
         # Randomly choose a node to travel to from current node
         if t == 0:
             currentNode = initialNode
         else:
             #neighborSet = G.getNeighborSet(currentNode)
-            currentNode = np.random.choice(np.arange(G.nodes), p=P[currentNode, :])
-        
+            try:
+                currentNode = np.random.choice(np.arange(G.nodes), p=P[currentNode, :])
+            except ValueError:
+                print(f"MH Random walk: Probabilities are not non-negative! (node #{currentNode})")
+                exit()
+                #p = abs(P[currentNode, :])
+                #currentNode = np.random.choice(np.arange(G.nodes), p)
+
         # Add node to nodes visited
         nodesVisited.append(currentNode)
         
