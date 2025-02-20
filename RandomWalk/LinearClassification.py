@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from Graph import Graph
 from graphGen import graphGen, completeGraphGen
 from RandomWalk import MetropolisHastingsRandomWalk, plotTVDistances, plotRandomWalk
+from DataMixing import GlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks
 
 # Set random seed for consistency
 SEED = 45
@@ -282,69 +283,76 @@ for i in range(len(X1_test), len(X_test)):
 X_test, Y_test = unison_shuffled_copies(X_test, Y_test)
 
 # Generates graph structure
-G = completeGraphGen(2*train_size, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
-#graphGen(train_size, 10, p=1, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
+#G = completeGraphGen(2*train_size, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
+G = graphGen(train_size, 10, p=1, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
 #print(G.edges) ~ 8000 edges
 
 # Perform multiple random walk/training/testing runs
 print("Training and testing graph machine learning model...")
-RUNS = 5
-TIMES = 15000
-test_losses_runs = []
-accuracies_runs = []
-startingNode = np.random.choice(G.nodes) # Use the same starting node across each run
-for n in range(RUNS):
-    # Performs random walk
-    times = np.arange(TIMES)
-    nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, times, startNode=startingNode)
-    #plotRandomWalk(times, nodesVisited)
+def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=5, timeCount=15000):
+    test_losses_runs = []
+    accuracies_runs = []
+    startingNode = np.random.choice(G.nodes) # Use the same starting node across each run
+    for n in range(runs):
+        # Performs random walk
+        times = np.arange(timeCount)
+        nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, times, startNode=startingNode)
+        #plotRandomWalk(times, nodesVisited)
 
-    # Set up machine learning model
-    loss_fn = torch.nn.CrossEntropyLoss()
-    model = LinearClassification()
-    optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
+        # Set up machine learning model
+        loss_fn = torch.nn.CrossEntropyLoss()
+        model = LinearClassification()
+        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
 
-    # Perform machine learning based on nodes visited
-    # Train at each node visited
-    test_losses = []
-    accuracies = []
-    for i in range(len(nodesVisited)):
-        nodeNum = nodesVisited[i]
-        if (nodeNum > train_size-1):
-            nodeNum -= train_size
-            X_trainSample = X2_train[nodeNum]
-            Y_trainSample = Y2_train[nodeNum]
-        else:
-            X_trainSample = X1_train[nodeNum]
-            Y_trainSample = Y1_train[nodeNum]
-        
-        X_trainSample = torch.tensor(X_trainSample).type(torch.float)
-        Y_trainSample = torch.tensor(Y_trainSample).type(torch.float)
-        train_loss = training(X_trainSample, Y_trainSample, model, loss_fn, optimizer)
+        # Perform machine learning based on nodes visited
+        # Train at each node visited
+        test_losses = []
+        accuracies = []
+        for i in range(len(nodesVisited)):
+            nodeNum = nodesVisited[i]
+            if (nodeNum > train_size-1):
+                nodeNum -= train_size
+                X_trainSample = X2_train[nodeNum]
+                Y_trainSample = Y2_train[nodeNum]
+            else:
+                X_trainSample = X1_train[nodeNum]
+                Y_trainSample = Y1_train[nodeNum]
+            
+            X_trainSample = torch.tensor(X_trainSample).type(torch.float)
+            Y_trainSample = torch.tensor(Y_trainSample).type(torch.float)
+            train_loss = training(X_trainSample, Y_trainSample, model, loss_fn, optimizer)
 
-        # Test model on random sample
-        test_loss_average = 0
-        accuracy_average = 0
-        X_test = torch.tensor(X_test).type(torch.float)
-        Y_test = torch.tensor(Y_test).type(torch.float)
-        test_loss, accuracy = testing(X_test, Y_test, model)
+            # Test model on random sample
+            X_test = torch.tensor(X_test).type(torch.float)
+            Y_test = torch.tensor(Y_test).type(torch.float)
+            test_loss, accuracy = testing(X_test, Y_test, model)
 
-        # Get results from current node testing
-        test_losses.append(test_loss)
-        accuracies.append(accuracy)
-        if (i % 100 == 0):
-            print(f"\nEpoch {i}: Training Loss = {train_loss.item()}")
-            print(f"Epoch {i}: Testing Loss = {test_loss}")
-            print(f"Epoch {i}: Accuracy = {accuracy}")
+            # Get results from current node testing
+            test_losses.append(test_loss)
+            accuracies.append(accuracy)
+            if (i % 100 == 0):
+                print(f"\nEpoch {i}: Training Loss = {train_loss.item()}")
+                print(f"Epoch {i}: Testing Loss = {test_loss}")
+                print(f"Epoch {i}: Accuracy = {accuracy}")
 
-    # Append results of run
-    test_losses_runs.append(test_losses)
-    accuracies_runs.append(accuracies)
+        # Append results of run
+        test_losses_runs.append(test_losses)
+        accuracies_runs.append(accuracies)
 
-# Average results across multiple runs
-averaged_test_losses = averageRunData(RUNS, test_losses_runs)
-averaged_accuracies = averageRunData(RUNS, accuracies_runs)
+    # Average results across multiple runs
+    averaged_test_losses = averageRunData(runs, test_losses_runs)
+    averaged_accuracies = averageRunData(runs, accuracies_runs)
 
-# Output results from graph random walk learning
-plotTestLosses(TIMES, averaged_test_losses)
-plotAccuracies(TIMES, averaged_accuracies)
+    # Output results from graph random walk learning
+    plotTestLosses(timeCount, averaged_test_losses)
+    plotAccuracies(timeCount, averaged_accuracies)
+graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test)
+
+# Mix graph
+n = 40_000
+times = np.arange(n+1)
+sampleTimes, energies, numGoodLinks, G = GlauberDynamicsDataSwitch(G, times, 0.1, plot=False, samplingSize=100)
+plotDiffHist(G)
+
+# Perform random walk on mixed graph
+graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test)
