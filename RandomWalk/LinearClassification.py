@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 
 # Custom imports
 from Graph import Graph
-from graphGen import graphGen, completeGraphGen
+from graphGen import graphGen, completeGraphGen, erdosRenyiGraphGen
 from RandomWalk import MetropolisHastingsRandomWalk, plotTVDistances, plotRandomWalk
 from DataMixing import GlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks
 
@@ -221,27 +221,28 @@ averaged_test_losses = averageRunData(RUNS, test_losses_runs)
 averaged_accuracies = averageRunData(RUNS, accuracies_runs)
 
 # Plots test losses over time (epochs)
-def plotTestLosses(epochs, test_losses):
+def plotTestLosses(epochs, test_losses, xlabel="Epochs"):
     x = np.arange(epochs)
     plt.plot(x, test_losses)
-    plt.title("Testing Losses over Epochs")
-    plt.xlabel("Epochs")
+    plt.title("Averaged Testing Losses")
+    plt.xlabel(xlabel)
     plt.ylabel("Testing Loss (CrossEntropy)")
     plt.ylim([0, 1])
     plt.show()
 plotTestLosses(EPOCHS, averaged_test_losses)
 
 # Plots accuracies over time (epochs)
-def plotAccuracies(epochs, accuracies):
+def plotAccuracies(epochs, accuracies, xlabel="Epochs"):
     x = np.arange(epochs)
     plt.plot(x, accuracies)
-    plt.title("Accuracy over Epochs")
-    plt.xlabel("Epochs")
+    plt.title("Averaged Accuracies")
+    plt.xlabel(xlabel)
     plt.ylabel("Accuracy")
     plt.ylim([0, 1.05])
     plt.show()
 plotAccuracies(EPOCHS, averaged_accuracies)
 
+# ------------------------------
 # Part 2: Graph machine learning
 # Get training dataset
 X1, Y1 = unison_shuffled_copies(X1, Y1)
@@ -284,12 +285,15 @@ X_test, Y_test = unison_shuffled_copies(X_test, Y_test)
 
 # Generates graph structure
 #G = completeGraphGen(2*train_size, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
-G = graphGen(train_size, 10, p=1, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
+G = erdosRenyiGraphGen(2*train_size, 0.5, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
+#G = graphGen(train_size, 10, p=1, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
 #print(G.edges) ~ 8000 edges
 
 # Perform multiple random walk/training/testing runs
+ITERATIONS = 15000
+RUNS = 20
 print("Training and testing graph machine learning model...")
-def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=5, timeCount=15000):
+def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=5, timeCount=15000, plotResults=True):
     test_losses_runs = []
     accuracies_runs = []
     startingNode = np.random.choice(G.nodes) # Use the same starting node across each run
@@ -331,9 +335,9 @@ def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_te
             test_losses.append(test_loss)
             accuracies.append(accuracy)
             if (i % 100 == 0):
-                print(f"\nEpoch {i}: Training Loss = {train_loss.item()}")
-                print(f"Epoch {i}: Testing Loss = {test_loss}")
-                print(f"Epoch {i}: Accuracy = {accuracy}")
+                print(f"\nIteration {i}: Training Loss = {train_loss.item()}")
+                print(f"Iteration {i}: Testing Loss = {test_loss}")
+                print(f"Iteration {i}: Accuracy = {accuracy}")
 
         # Append results of run
         test_losses_runs.append(test_losses)
@@ -344,11 +348,50 @@ def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_te
     averaged_accuracies = averageRunData(runs, accuracies_runs)
 
     # Output results from graph random walk learning
-    plotTestLosses(timeCount, averaged_test_losses)
-    plotAccuracies(timeCount, averaged_accuracies)
-graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test)
+    if (plotResults):
+        plotTestLosses(timeCount, averaged_test_losses, xlabel="Iterations")
+        plotAccuracies(timeCount, averaged_accuracies, xlabel="Iterations")
+    return averaged_test_losses, averaged_accuracies
+#graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=True)
+
+# Test Erdos-Renyi GRW behavior at different p values
+def pValueExperiment(G, runs, iterations, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test):
+    pTestLosses = []
+    pAccuracies = []
+    for p in np.arange(0.1, 1.1, 0.1):
+        print(f"\nPerforming Graph Random Walk for Erdos-Renyi graph with p={p}...")
+        G = erdosRenyiGraphGen(2*train_size, p, path="./graphData/LinearRegressionGraph.csv", plotGraph=False)
+        averaged_test_losses, averaged_accuracies = graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=runs, timeCount=iterations, plotResults=False)
+        pTestLosses.append(averaged_test_losses)
+        pAccuracies.append(averaged_accuracies)
+    return pTestLosses, pAccuracies
+pTestLosses, pAccuracies = pValueExperiment(G, RUNS, ITERATIONS, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test)
+
+# Plot averaged test losses and accuracies based on Erdos-Renyi p-value experiments
+def plotTestLossesP(iterations, test_losses, xlabel="Iterations"):
+    x = np.arange(iterations)
+    plt.title("Averaged Test Losses over p")
+    plt.xlabel(xlabel)
+    plt.ylabel("Test Losses")
+    plt.ylim([0, 1.05])
+    for i in range(len(accuracies)):
+        plt.plot(x, accuracies[i], label=f"p={(i+1)*0.1}")
+    plt.legend()
+    plt.show()
+def plotAccuraciesP(iterations, accuracies, xlabel="Iterations"):
+    x = np.arange(iterations)
+    plt.title("Averaged Accuracies over p")
+    plt.xlabel(xlabel)
+    plt.ylabel("Accuracy")
+    plt.ylim([0, 1.05])
+    for i in range(len(accuracies)):
+        plt.plot(x, accuracies[i], label=f"p={(i+1)*0.1}")
+    plt.legend()
+    plt.show()
+plotAccuraciesP(ITERATIONS, pAccuracies)
 
 # Mix graph
+'''
 n = 40_000
 times = np.arange(n+1)
 sampleTimes, energies, numGoodLinks, G = GlauberDynamicsDataSwitch(G, times, 0.1, plot=False, samplingSize=100)
@@ -356,3 +399,4 @@ plotDiffHist(G)
 
 # Perform random walk on mixed graph
 graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test)
+'''
