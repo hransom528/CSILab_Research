@@ -116,6 +116,47 @@ def completeGraphGen(size, path="graphData/generatedCompleteGraph.csv", plotGrap
 	# Return custom graph object
 	return GraphObj
 
+# Generates a single complete graph with specified size
+def erdosRenyiGraphGen(size, p, path="graphData/generatedErdosRenyiGraph.csv", plotGraph=False):
+	G = nx.erdos_renyi_graph(size, p)
+
+	# Sets node types
+	node_types = [-1] * (size)
+	color_map = ['blue'] * (size)
+	for i in range(0, size // 2):
+		node_types[i] = 1
+		color_map[i] = 'red'
+
+	# Plot graph if configured
+	graphLayout = nx.spring_layout(G)
+	if (plotGraph):
+		nx.draw(G, pos=graphLayout, node_color=color_map, with_labels=False, node_size=40)
+		plt.show()
+
+	# Export adjacency matrix to CSV
+	adjMatrix = nx.adjacency_matrix(G).toarray()
+	for i in range(0, size):
+		for j in range(0, size):
+			if (adjMatrix[i, j] != 0):
+				adjMatrix[i, j] = (node_types[i] * node_types[j])
+	graph_df = pd.DataFrame(adjMatrix)
+	graph_df.to_csv(path, header=False, index=False)
+
+	# Create custom Graph object
+	GraphObj = Graph.importTypedCSV(path, node_types)
+	GraphObj.layout = graphLayout
+	GraphObj.edges = G.number_of_edges()
+
+	# Export node types to file
+	with open(path+".types", "w") as output:
+		outStr = str(node_types)
+		outStr = outStr.replace("[", "")
+		outStr = outStr.replace("]", "")
+		output.write(outStr)
+
+	# Return custom graph object
+	return GraphObj
+
 # MAIN
 if __name__ == "__main__":
 	# Handles command-line arguments
