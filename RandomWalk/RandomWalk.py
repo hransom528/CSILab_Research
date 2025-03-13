@@ -80,7 +80,7 @@ def MetropolisHastingsRandomWalk(G, times, startNode=-1):
                 else:
                     P[i, j] = 0
     for i in range(0, n):
-        P[i, i] = 1 - np.sum(P[i, :])
+        P[i, i] = np.fmax(0, 1 - np.sum(P[i, :]))
 
     # 4.) Perform Metropolis-Hastings Random Walk
     nodesVisited = []
@@ -100,6 +100,7 @@ def MetropolisHastingsRandomWalk(G, times, startNode=-1):
                 currentNode = np.random.choice(np.arange(G.nodes), p=P[currentNode, :])
             except ValueError:
                 print(f"MH Random walk: Probabilities are not non-negative! (node #{currentNode})")
+                print(P[currentNode, :])
                 exit()
                 #p = abs(P[currentNode, :])
                 #currentNode = np.random.choice(np.arange(G.nodes), p)
