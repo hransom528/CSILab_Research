@@ -3,3 +3,4 @@ BasicMNISTClassifier/MNIST/
 __pycache__
 RandomWalk/mixingPics
 RandomWalk/MNIST_Data
+RandomWalk/graphData
