@@ -28,6 +28,9 @@ class Graph:
 		if (isTyped):
 			if (len(nodeTypes) == numNodes):
 				self.nodeTypes = nodeTypes
+				self.nodeDists = []
+				for i in range(len(nodeTypes)):
+					self.nodeDists[i] = self.__calcNeighborhoodDist(i)
 			else:
 				raise ValueError("nodeTypes does not fit the dimensions of graph")
 		
@@ -267,3 +270,30 @@ class Graph:
 			P[i, i] = 1 - np.sum(P[i, :])
 		
 		return P
+	
+	# Calculates the neighboorhood distribution for a given node
+	def __calcNeighborhoodDist(self, node):
+		# Get row of node from adjacency matrix
+		row = self.A[node, :]
+
+		# Get the type of the current node
+		baseType = self.nodeTypes[node]
+		
+		# Get number of neighbors and neighbors that are different
+		totalNeighbors = 0
+		diffNeighbors = 0
+		for i in range(len(row)):
+			# Don't count current node
+			if (i == node):
+				continue
+
+			# If a neighbor exists
+			if (row[i] != 0):
+				totalNeighbors += 1
+				if (self.nodeTypes[i] != baseType):
+					diffNeighbors += 1
+
+		# Calculate and return percent different neighbors
+		if (totalNeighbors <= 0): # No neighbors
+			return 0
+		return diffNeighbors / float(totalNeighbors)
