@@ -60,7 +60,7 @@ def plotGeneratedData(X1, X2, Y1, Y2):
     plt.ylabel("Y")
     plt.legend()
     plt.show()
-plotGeneratedData(X1, X2, Y1, Y2)
+#plotGeneratedData(X1, X2, Y1, Y2)
 
 # Combine data into tensor/dataset objects
 dataset1 = torch.tensor([X1, Y1, np.ones(SIZE)]).T
@@ -123,7 +123,7 @@ def plotTrainTestSplit(X_train, Y_train, X_test, Y_test):
     plt.ylabel("Y")
     plt.legend()
     plt.show()
-plotTrainTestSplit(X_train, Y_train, X_test, Y_test)
+#plotTrainTestSplit(X_train, Y_train, X_test, Y_test)
 
 # Define linear classification model
 # See: https://www.geeksforgeeks.org/linear-regression-using-pytorch/
@@ -139,13 +139,9 @@ class LinearClassification(torch.nn.Module):
     def forward(self, x):
         y_pred = self.linear(x)
         return y_pred
-LEARNING_RATE = 0.1
+LEARNING_RATE = 0.001
 EPOCHS = 15000
-RUNS = 5#10
-#loss_fn = torch.nn.MSELoss(reduction='sum')
-loss_fn = torch.nn.CrossEntropyLoss()
-model = LinearClassification()
-optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
+RUNS = 50
 
 # Train the model
 def training(X, Y_train, model, loss_fn, optimizer):
@@ -183,24 +179,39 @@ def testing(X, Y_test, model):
 print("\nTraining and testing model...")
 test_losses_runs = []
 accuracies_runs = []
+
+starting_model = LinearClassification()
+starting_parameters = starting_model.parameters()
+torch.save(starting_model.state_dict(), "starting_model.pth")
 for i in range(RUNS):
     # Reset model/data in between runs
     test_losses = []
     accuracies = []
-    loss_fn = torch.nn.CrossEntropyLoss()
+
     model = LinearClassification()
+    loss_fn = torch.nn.CrossEntropyLoss()
+    checkpoint = torch.load("starting_model.pth", weights_only=True)
+    model.load_state_dict(checkpoint)
     optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
+
+    # Print model weights/parameters before training
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(name, param.data)
 
     # Iterate over n epochs for training/testing
     for i in range(EPOCHS):
-        train_loss = training(X_train, Y_train, model, loss_fn, optimizer)
+        sample_ind = np.random.choice(np.arange(len(X)))
+        X_sample = X_train[sample_ind]
+        Y_sample = Y_train[sample_ind]
+        train_loss = training(X_sample, Y_sample, model, loss_fn, optimizer)
         test_loss, accuracy = testing(X_test, Y_test, model)
         test_losses.append(test_loss)
         accuracies.append(accuracy)
-        if (i % 100 == 0):
-            print(f"\nEpoch {i}: Training Loss = {train_loss.item()}")
-            print(f"Epoch {i}: Testing Loss = {test_loss.item()}")
-            print(f"Epoch {i}: Accuracy = {accuracy}")
+        if (i % 1000 == 0):
+            print(f"\nIteration {i}: Training Loss = {train_loss.item()}")
+            print(f"Iteration {i}: Testing Loss = {test_loss.item()}")
+            print(f"Iteration {i}: Accuracy = {accuracy}")
     
     # Save run results to 2D arrays
     test_losses_runs.append(test_losses)
@@ -240,7 +251,7 @@ def plotAccuracies(epochs, accuracies, xlabel="Epochs"):
     plt.ylabel("Accuracy")
     plt.ylim([0, 1.05])
     plt.show()
-#plotAccuracies(EPOCHS, averaged_centralized_accuracies)
+plotAccuracies(EPOCHS, averaged_centralized_accuracies)
 
 # ------------------------------
 # Part 2: Graph machine learning
@@ -293,8 +304,9 @@ G4 = graphGen(train_size, 10, p=1, path="./graphData/LinearRegressionGraph.csv",
 # Perform multiple random walk/training/testing runs
 ITERATIONS = 15000
 RUNS = 20
+LEARNING_RATE = 0.01
 print("Training and testing graph machine learning model...")
-def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=5, timeCount=15000, plotResults=True):
+def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=5, timeCount=15000, plotResults=True, learning_rate=0.01):
     test_losses_runs = []
     accuracies_runs = []
     startingNode = np.random.choice(G.nodes) # Use the same starting node across each run
@@ -307,7 +319,9 @@ def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_te
         # Set up machine learning model
         loss_fn = torch.nn.CrossEntropyLoss()
         model = LinearClassification()
-        optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
+        checkpoint = torch.load("starting_model.pth", weights_only=True)
+        model.load_state_dict(checkpoint)
+        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
         # Perform machine learning based on nodes visited
         # Train at each node visited
@@ -360,8 +374,8 @@ def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_te
         plotTestLosses(timeCount, averaged_test_losses, xlabel="Iterations")
         plotAccuracies(timeCount, averaged_accuracies, xlabel="Iterations")
     return averaged_test_losses, averaged_accuracies
-averaged_complete_test_losses, averaged_complete_accuracies = graphRandomWalkLearn(G1, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=False)
-averaged_clustered_test_losses, averaged_clustered_accuracies = graphRandomWalkLearn(G4, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=False)
+averaged_complete_test_losses, averaged_complete_accuracies = graphRandomWalkLearn(G1, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=True, learning_rate=LEARNING_RATE)
+averaged_clustered_test_losses, averaged_clustered_accuracies = graphRandomWalkLearn(G4, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=True, learning_rate=LEARNING_RATE)
 
 # Test Erdos-Renyi GRW behavior at different p values
 def pValueExperiment(runs, iterations, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, plotResults=False):
@@ -410,8 +424,7 @@ sampleTimes, energies, numGoodLinks, Gmixed = GlauberDynamicsDataSwitch(G4, time
 plotDiffHist(Gmixed)
 
 # Perform random walk on mixed graph
-averaged_mixed_test_losses, averaged_mixed_accuracies = graphRandomWalkLearn(Gmixed, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=False)
-#TODO: Fix graphRandomWalkLearn data type assignment (base it off of node types)
+averaged_mixed_test_losses, averaged_mixed_accuracies = graphRandomWalkLearn(Gmixed, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
 
 # Plot combined graphs from centralized, complete, and clustered runs
 def plotCombinedTestLosses(iterations, centralized_test_losses, complete_test_losses, clustered_test_losses, mixed_test_losses, xlabel="Iterations"):
