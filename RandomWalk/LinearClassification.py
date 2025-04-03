@@ -139,7 +139,7 @@ class LinearClassification(torch.nn.Module):
     def forward(self, x):
         y_pred = self.linear(x)
         return y_pred
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.01
 EPOCHS = 15000
 RUNS = 50
 
@@ -302,9 +302,10 @@ G4 = graphGen(train_size, 10, p=1, path="./graphData/LinearRegressionGraph.csv",
 #print(G.edges) ~ 8000 edges
 
 # Perform multiple random walk/training/testing runs
-ITERATIONS = 15000
-RUNS = 20
+ITERATIONS = 7000
+RUNS = 50
 LEARNING_RATE = 0.01
+
 print("Training and testing graph machine learning model...")
 def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=5, timeCount=15000, plotResults=True, learning_rate=0.01):
     test_losses_runs = []
@@ -374,8 +375,8 @@ def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_te
         plotTestLosses(timeCount, averaged_test_losses, xlabel="Iterations")
         plotAccuracies(timeCount, averaged_accuracies, xlabel="Iterations")
     return averaged_test_losses, averaged_accuracies
-averaged_complete_test_losses, averaged_complete_accuracies = graphRandomWalkLearn(G1, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=True, learning_rate=LEARNING_RATE)
-averaged_clustered_test_losses, averaged_clustered_accuracies = graphRandomWalkLearn(G4, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=True, learning_rate=LEARNING_RATE)
+averaged_complete_test_losses, averaged_complete_accuracies = graphRandomWalkLearn(G1, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
+averaged_clustered_test_losses, averaged_clustered_accuracies = graphRandomWalkLearn(G4, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
 
 # Test Erdos-Renyi GRW behavior at different p values
 def pValueExperiment(runs, iterations, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, plotResults=False):
@@ -414,8 +415,50 @@ def plotAccuraciesP(iterations, accuracies, xlabel="Iterations"):
         plt.plot(x, accuracies[i], label=f"p={(i+1)*0.1}")
     plt.legend()
     plt.show()
-#print("Erdos-Renyi p-value experiment...")
-#pTestLosses, pAccuracies = pValueExperiment(RUNS, ITERATIONS, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, plotResults=True)
+#pTestLosses, pAccuracies = pValueExperiment(RUNS, ITERATIONS, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, plotResults=False)
+#plotTestLossesP(ITERATIONS, pTestLosses)
+#plotAccuraciesP(ITERATIONS, pAccuracies)
+
+# Test D-regular GRW behavior at different d values
+def dRegularExperiment(runs, iterations, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, plotResults=False):
+    dTestLosses = []
+    dAccuracies = []
+    for d in np.arange(1, 11):
+        print(f"\nPerforming Graph Random Walk for D-regular graph with d={d}...")
+        G = dRegularGraphGen(2*train_size, d, path="./graphData/LinearRegressionGraph.csv", plotGraph=False)
+        averaged_test_losses, averaged_accuracies = graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=runs, timeCount=iterations, plotResults=False)
+        dTestLosses.append(averaged_test_losses)
+        dAccuracies.append(averaged_accuracies)
+    
+    # Plot results (if configured)
+    if (plotResults):
+        plotTestLossesP(iterations, dTestLosses)
+        plotAccuraciesP(iterations, dAccuracies)
+    return dTestLosses, dAccuracies
+# Plot averaged test losses and accuracies based on D-regular experiments
+def plotTestLossesD(iterations, test_losses, xlabel="Iterations"):
+    x = np.arange(iterations)
+    plt.title("Averaged Test Losses over d")
+    plt.xlabel(xlabel)
+    plt.ylabel("Test Losses")
+    plt.ylim([0, 1.05])
+    for i in range(len(test_losses)):
+        plt.plot(x, test_losses[i], label=f"d={(i+1)}")
+    plt.legend()
+    plt.show()
+def plotAccuraciesD(iterations, accuracies, xlabel="Iterations"):
+    x = np.arange(iterations)
+    plt.title("Averaged Accuracies over d")
+    plt.xlabel(xlabel)
+    plt.ylabel("Accuracy")
+    plt.ylim([0, 1.05])
+    for i in range(len(accuracies)):
+        plt.plot(x, accuracies[i], label=f"d={(i+1)}")
+    plt.legend()
+    plt.show()
+#dTestLosses, dAccuracies = dRegularExperiment(RUNS, ITERATIONS, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, plotResults=False)
+#plotTestLossesD(ITERATIONS, dTestLosses)
+#plotAccuraciesD(ITERATIONS, dAccuracies)
 
 # Mix graph
 n = 75_000
