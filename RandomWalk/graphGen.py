@@ -145,12 +145,12 @@ def mAryGraphGen(m=3, cluster_size=20, sparse_connections=3, p=0.5, path="graphD
 			nx.draw(G, pos=graphLayout, node_color=color_map, with_labels=False, node_size=40)
 			plt.show()
 
-	# TODO: Export adjacency matrix to CSV
+	# Export adjacency matrix to CSV
 	adjMatrix = nx.adjacency_matrix(G).toarray()
 	graph_df = pd.DataFrame(adjMatrix)
 	graph_df.to_csv(path, header=False, index=False)
 
-	# TODO: Create custom Graph object
+	# Create custom Graph object
 	GraphObj = Graph.importTypedCSV(path, node_types)
 	GraphObj.layout = graphLayout
 	GraphObj.edges = G.number_of_edges()
