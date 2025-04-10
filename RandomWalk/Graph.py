@@ -30,7 +30,7 @@ class Graph:
 				self.nodeTypes = nodeTypes
 				self.nodeDists = []
 				for i in range(len(nodeTypes)):
-					self.nodeDists[i] = self.__calcNeighborhoodDist(i)
+					self.nodeDists[i] = self.calcNeighborhoodDist(i)
 			else:
 				raise ValueError("nodeTypes does not fit the dimensions of graph")
 		
@@ -80,6 +80,9 @@ class Graph:
 		else:
 			self.nodeTypes = nodeTypes
 			self.typed = True
+			self.nodeDists = []
+			for i in range(len(nodeTypes)):
+				self.nodeDists.append(self.calcNeighborhoodDist(i))
 		return self
 
 	# Export adjacency matrix to CSV
@@ -209,7 +212,8 @@ class Graph:
 			plt.show()
 	
 	# Graphically represent current typed graph
-	def plot_typed_graph(self, path=""):
+	# TODO: Update with M-ary plotting
+	def plot_typed_graph(self, path="", m=2):
 		# Check if graph is typed
 		if (not self.typed):
 			raise ValueError("Graph is not typed")
@@ -219,13 +223,19 @@ class Graph:
 		G = nx.from_numpy_array(self.A, create_using=nx.Graph)
 
 		# Assign node types to graph
+		colors = "rbgcmykw"
 		color_map = []
 		for i in range(0, self.nodes):
 			G.nodes[i]['type'] = self.nodeTypes[i]
-			if (self.nodeTypes[i] == -1):
-				color_map.append('blue')
+			if (m == 2):
+				if (self.nodeTypes[i] == -1):
+					color_map.append('blue')
+				else:
+					color_map.append('red')
+			elif (m <= 8):
+				color_map.append(colors[self.nodeTypes[i]])
 			else:
-				color_map.append('red')
+				raise ValueError("m cannot exceed 8 for plotting!")
 
 		# Draw the graph
 		#print(G.nodes.data())
@@ -237,7 +247,6 @@ class Graph:
 			plt.close()
 		else:
 			plt.show()
-		
 
 	# Gets transistion matrix based on graph and stationary distribution
 	def getTransistionMatrix(self, pi):
@@ -272,7 +281,7 @@ class Graph:
 		return P
 	
 	# Calculates the neighboorhood distribution for a given node
-	def __calcNeighborhoodDist(self, node):
+	def calcNeighborhoodDist(self, node):
 		# Get row of node from adjacency matrix
 		row = self.A[node, :]
 
