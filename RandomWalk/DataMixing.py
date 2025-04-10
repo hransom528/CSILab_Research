@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from math import exp
 from Graph import Graph
 from TVDistance import tvDistance
-from graphGen import graphGen
+from graphGen import graphGen, mAryGraphGen
 
 # K(sigma, v) - Get number of different-classed neighbors for a given node
 def getDifferentNeighbors(G, node):
@@ -42,12 +42,19 @@ def getEnergy(G):
     #        energy += G.A[u, v]
     return (energy * 0.5)
 
+# Get the energy of an M-ary graph
+def mAryGetEnergy(m, G):
+    ideal = 1 - (1 / float(m))
+    idealDist = [ideal] * G.nodes
+    energy = tvDistance(G.nodeDists, idealDist)
+    return energy
+
 # No. of "Good" links (edges between nodes of different types)
 def getGoodLinks(G):
     goodLinks = 0
     for u in range(0, G.nodes):
         for v in range(0, G.nodes):
-            if (G.A[u, v] == 1) and (G.getNodeType(u) != G.getNodeType(v)):
+            if (G.A[u, v] != 0) and (G.getNodeType(u) != G.getNodeType(v)):
                 goodLinks += 1
 
     goodLinks = goodLinks // 2
@@ -177,6 +184,108 @@ def GlauberDynamicsDataSwitch(G, times, temperature, plot=True, samplingSize=100
             plt.close("middleGraph")
     return sampleTimes, energies, numGoodLinks, G
 
+# Calculates the probability of switching nodes in an M-ary graph
+def mAryProbSwitch(m, G, u, v, temperature):
+    idealVal = 1 - (1/float(m)) 
+    uType = G.nodeTypes[u]
+    vType = G.nodeTypes[v]
+    '''
+    uDist = G.nodeDists[u]
+    vDist = G.nodeDists[v]
+    tvU = uDist - ideal
+    tvV = vDist - ideal
+    '''
+    # Get all nodes in the system
+    uNeighbors = G.getNeighborSet(u)
+    vNeighbors = G.getNeighborSet(v)
+    neighborNodes = list(set(uNeighbors + vNeighbors))
+
+    # Get initial percent different neighobrs for each node in the system
+    diffNeighborDists = [G.nodeDists[n] for n in neighborNodes]
+    idealDist = [idealVal] * len(neighborNodes)
+    priorDiff = tvDistance(diffNeighborDists, idealDist)
+
+    # Get posterior percent different neighbors, assuming the switch occurs
+    G.nodeTypes[u] = vType
+    G.nodeTypes[v] = uType
+    posteriorNeighborDists = []
+    for n in neighborNodes:
+        posteriorNeighborDists.append(G.calcNeighborhoodDist(n))
+    posteriorDiff = tvDistance(posteriorNeighborDists, idealDist)
+
+    # Undo the assumed node switch
+    G.nodeTypes[u] = uType
+    G.nodeTypes[v] = vType
+
+    # Calculate switching probability based off of change in TV distance
+    totalDiff = priorDiff - posteriorDiff 
+    #print(priorDiff)
+    #print(posteriorDiff)
+    #print(totalDiff)
+    #return
+    switchProb = (1 / float(1 + exp(-temperature * totalDiff)))
+    return switchProb
+
+
+# Glauber Dynamics M-ary Data Switching
+def mAryGlauberDynamicsDataSwitch(m, G, times, temperature, plot=False, samplingSize=100):
+    energies = []
+    numGoodLinks = []
+    sampleTimes = []
+    nodeList = np.arange(G.nodes)
+
+    for t in times:
+        # Select two random nodes of different types
+        neighborSet = []
+        while (len(neighborSet) == 0):
+            u = np.random.choice(nodeList)
+            neighborSet = G.getDifferentNeighborSet(u)
+        v = np.random.choice(neighborSet)
+        while (G.getNodeType(u) == G.getNodeType(v)):
+            v = np.random.choice(neighborSet)
+
+        # Perform mixing if nodes are different
+        if (G.getNodeType(u) != G.getNodeType(v)):
+            # Calculates probability of switching
+            probSwitch = mAryProbSwitch(m, G, u, v, temperature)
+
+            # Print switching probability during a sample time
+            if (t % samplingSize == 0):
+                print(f"{t}.) Probability of switching: {probSwitch}")
+
+            # Switches node type/data with probability probSwitch
+            switch = np.random.choice([0, 1], p=[1-probSwitch, probSwitch])
+            if (switch == 1):
+                # Performs switch
+                uType = G.nodeTypes[u]
+                vType = G.nodeTypes[v]
+                G.nodeTypes[u] = vType
+                G.nodeTypes[v] = uType
+
+                # Recalculate node dists
+                # TODO: Make this smart (i.e. don't do it for all the nodes)
+                for i in range(G.nodes):
+                    G.nodeDists[i] = G.calcNeighborhoodDist(i)
+
+                # Plot/log graph state at each iteration
+                if (plot):
+                    plt.figure(f"figure{t+1}")
+                    G.plot_typed_graph(f"mixingPics/mixingGraph{t+1}.png")
+                    plt.close(f"figure{t+1}")
+
+        # Log graph energy every xth sample
+        if (t % samplingSize == 0):
+            sampleTimes.append(t)
+            energies.append(mAryGetEnergy(m, G))
+            numGoodLinks.append(getGoodLinks(G))
+
+        # Plot approximate "middle" of mixing
+        if (plot and (t == len(times)//4)):
+            plt.figure("middleGraph")
+            G.plot_typed_graph("mixingPics/middleGraph.png")
+            plt.close("middleGraph")
+    return sampleTimes, energies, numGoodLinks, G
+
 # TODO: Metropolis-Hastings
 def MetropolisHastingsDataSwitch(G, times, temperature):
     for t in times:
@@ -190,6 +299,8 @@ if __name__ == "__main__":
     for f in files:
         os.remove(f)
 
+    '''
+    # --- Part 1: Binary mixing ---
 	# Create a typed graph object
     print("Generating Graph...")
     #G = Graph.importTypedCSV("graphData/mixingGraph.csv", [-1,1,1,-1,1,-1,-1,1])
@@ -235,3 +346,20 @@ if __name__ == "__main__":
     #MetropolisHastingsDataSwitch(G, times, 1)
 
     print("Finished Simulations!")
+    '''
+
+    # --- Part 2: M-ary mixing ---
+    print("Generating Graph...")
+    G = mAryGraphGen(m=3, cluster_size=50, sparse_connections=5, p=0.5, path="graphData/mAryMixingGraph.csv", plotGraph=True)
+    G.plot_typed_graph("mixingPics/startGraph.png", m=3)
+
+    # Generate time points
+    n = 100_000
+    times = np.arange(n+1)
+
+    # Run Glauber Dynamics M-ary data switching simulation
+    sampleTimes, energies, numGoodLinks, MixedGraph = mAryGlauberDynamicsDataSwitch(3, G, times, 10, plot=False, samplingSize=100)
+    plotEnergy(sampleTimes, energies)
+    plotGoodLinks(MixedGraph, sampleTimes, numGoodLinks)
+    plotDiffHist(MixedGraph)
+    MixedGraph.plot_typed_graph("mixingPics/finalGraph.png", m=3)
