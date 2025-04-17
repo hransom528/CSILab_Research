@@ -151,7 +151,7 @@ def mAryGraphGen(m=3, cluster_size=20, sparse_connections=3, p=0.5, path="graphD
 	graph_df.to_csv(path, header=False, index=False)
 
 	# Create custom Graph object
-	GraphObj = Graph.importTypedCSV(path, node_types)
+	GraphObj = Graph.importTypedCSV(path, node_types, m=m)
 	GraphObj.layout = graphLayout
 	GraphObj.edges = G.number_of_edges()
 
@@ -164,7 +164,6 @@ def mAryGraphGen(m=3, cluster_size=20, sparse_connections=3, p=0.5, path="graphD
 
 	# Return custom graph object
 	return GraphObj
-
 
 # Generates a single complete graph with specified size
 def completeGraphGen(size, path="graphData/generatedCompleteGraph.csv", plotGraph=False):

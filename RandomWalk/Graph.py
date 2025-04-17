@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 # Graph class
 class Graph:
 	# Constructor
-	def __init__(self, numNodes=0, numEdges=0, isTyped=False, nodeTypes=[]):
+	def __init__(self, numNodes=0, numEdges=0, isTyped=False, nodeTypes=[], m=2):
 		# Basic graph fields
 		#self.nodeList = []
 		#self.edgeList = []
@@ -29,6 +29,7 @@ class Graph:
 			if (len(nodeTypes) == numNodes):
 				self.nodeTypes = nodeTypes
 				self.nodeDists = []
+				self.m = m
 				for i in range(len(nodeTypes)):
 					self.nodeDists[i] = self.calcNeighborhoodDist(i)
 			else:
@@ -73,7 +74,7 @@ class Graph:
 		return self
 
 	# Typed graph CSV import
-	def importTypedCSV(filename, nodeTypes):
+	def importTypedCSV(filename, nodeTypes, m=2):
 		self = Graph.importCSV(filename)
 		if (len(nodeTypes) != self.nodes):
 			raise ValueError("nodeTypes does not fit the dimensions of graph")
@@ -81,6 +82,7 @@ class Graph:
 			self.nodeTypes = nodeTypes
 			self.typed = True
 			self.nodeDists = []
+			self.m = m
 			for i in range(len(nodeTypes)):
 				self.nodeDists.append(self.calcNeighborhoodDist(i))
 		return self
@@ -289,6 +291,7 @@ class Graph:
 		baseType = self.nodeTypes[node]
 		
 		# Get number of neighbors and neighbors that are different
+		neighborCounts = [0] * self.m
 		totalNeighbors = 0
 		diffNeighbors = 0
 		for i in range(len(row)):
@@ -302,7 +305,14 @@ class Graph:
 				if (self.nodeTypes[i] != baseType):
 					diffNeighbors += 1
 
+				if (self.nodeTypes[i] == -1): # binary case (m=2) TODO: Fix this
+					neighborCounts[1] += 1
+				else:
+					neighborCounts[self.nodeTypes[i] - 1] += 1
+
 		# Calculate and return percent different neighbors
 		if (totalNeighbors <= 0): # No neighbors
 			return 0
-		return diffNeighbors / float(totalNeighbors)
+		percentDiffNeighbors = diffNeighbors / float(totalNeighbors)
+		neighborDist = [x / float(totalNeighbors) for x in neighborCounts]
+		return neighborDist

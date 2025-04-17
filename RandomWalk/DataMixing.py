@@ -44,9 +44,13 @@ def getEnergy(G):
 
 # Get the energy of an M-ary graph
 def mAryGetEnergy(m, G):
-    ideal = 1 - (1 / float(m))
-    idealDist = [ideal] * G.nodes
-    energy = tvDistance(G.nodeDists, idealDist)
+    ideal = (1 / float(m))
+    idealDist = [ideal] * m
+    
+    energy = 0
+    for i in range(G.nodes):
+        node_energy = tvDistance(G.nodeDists[i], idealDist)
+        energy += node_energy
     return energy
 
 # No. of "Good" links (edges between nodes of different types)
@@ -107,6 +111,27 @@ def plotDiffHist(G, bins=20):
     plt.ylabel("Frequency")
     plt.show()
         
+# Plots histogram of m-ary node neighbor TV distances
+def plotTVHist(G, m=2, bins=20):
+    # Set up ideal node neighbor distributions
+    ideal = (1 / float(m))
+    idealDist = [ideal] * m
+    
+    # Get TV dists for each node
+    tvDists = []
+    for i in range(G.nodes):
+        nodeDist = G.nodeDists[i]
+        dist = tvDistance(nodeDist, idealDist)
+        tvDists.append(dist)
+
+    # Plot histogram
+    plt.figure()
+    plt.hist(tvDists, bins)
+    plt.title("Histogram of Node Neighbor TV Dists")
+    plt.xlabel("TV Distance")
+    plt.ylabel("Frequency")
+    plt.show()
+
 # Glauber Dynamics 
 def GlauberDynamicsDataSwitch(G, times, temperature, plot=True, samplingSize=100):
     energies = []
@@ -186,7 +211,9 @@ def GlauberDynamicsDataSwitch(G, times, temperature, plot=True, samplingSize=100
 
 # Calculates the probability of switching nodes in an M-ary graph
 def mAryProbSwitch(m, G, u, v, temperature):
-    idealVal = 1 - (1/float(m)) 
+    #idealVal = 1 - (1/float(m)) 
+    idealVal = 1 / float(m)
+    idealDist = [idealVal] * m
     uType = G.nodeTypes[u]
     vType = G.nodeTypes[v]
     '''
@@ -200,10 +227,15 @@ def mAryProbSwitch(m, G, u, v, temperature):
     vNeighbors = G.getNeighborSet(v)
     neighborNodes = list(set(uNeighbors + vNeighbors))
 
-    # Get initial percent different neighobrs for each node in the system
-    diffNeighborDists = [G.nodeDists[n] for n in neighborNodes]
-    idealDist = [idealVal] * len(neighborNodes)
-    priorDiff = tvDistance(diffNeighborDists, idealDist)
+    # Get initial energy for each node in the system
+    diffNeighborDists = []
+    for n in neighborNodes:
+        diffNeighborDists.append(G.nodeDists[n])
+    
+    priorDiff = 0
+    for i in range(len(diffNeighborDists)):
+        dist = tvDistance(diffNeighborDists[i], idealDist)
+        priorDiff += dist
 
     # Get posterior percent different neighbors, assuming the switch occurs
     G.nodeTypes[u] = vType
@@ -211,7 +243,11 @@ def mAryProbSwitch(m, G, u, v, temperature):
     posteriorNeighborDists = []
     for n in neighborNodes:
         posteriorNeighborDists.append(G.calcNeighborhoodDist(n))
-    posteriorDiff = tvDistance(posteriorNeighborDists, idealDist)
+    
+    posteriorDiff = 0
+    for i in range(len(posteriorNeighborDists)):
+        dist = tvDistance(posteriorNeighborDists[i], idealDist)
+        posteriorDiff += dist 
 
     # Undo the assumed node switch
     G.nodeTypes[u] = uType
@@ -222,10 +258,8 @@ def mAryProbSwitch(m, G, u, v, temperature):
     #print(priorDiff)
     #print(posteriorDiff)
     #print(totalDiff)
-    #return
     switchProb = (1 / float(1 + exp(-temperature * totalDiff)))
     return switchProb
-
 
 # Glauber Dynamics M-ary Data Switching
 def mAryGlauberDynamicsDataSwitch(m, G, times, temperature, plot=False, samplingSize=100):
@@ -354,7 +388,7 @@ if __name__ == "__main__":
     G.plot_typed_graph("mixingPics/startGraph.png", m=3)
 
     # Generate time points
-    n = 100_000
+    n = 50_000
     times = np.arange(n+1)
 
     # Run Glauber Dynamics M-ary data switching simulation
@@ -362,4 +396,5 @@ if __name__ == "__main__":
     plotEnergy(sampleTimes, energies)
     plotGoodLinks(MixedGraph, sampleTimes, numGoodLinks)
     plotDiffHist(MixedGraph)
+    plotTVHist(G, m=3)
     MixedGraph.plot_typed_graph("mixingPics/finalGraph.png", m=3)
