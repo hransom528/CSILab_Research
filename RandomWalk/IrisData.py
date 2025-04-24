@@ -15,10 +15,10 @@ from sklearn.preprocessing import StandardScaler
 
 # Custom Imports
 from Graph import Graph
-from graphGen import graphGen
+from graphGen import graphGen, mAryGraphGen
 from TVDistance import tvDistance
 from RandomWalk import MetropolisHastingsRandomWalk, plotTVDistances
-from DataMixing import GlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks
+from DataMixing import GlauberDynamicsDataSwitch, mAryGlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks
 from MNISTData import loadMNISTData
 
 # Set random seed for consistency
@@ -122,8 +122,8 @@ class LinearClassification(torch.nn.Module):
         y_pred = self.linear(x)
         return y_pred
 LEARNING_RATE = 0.01
-EPOCHS = 10000
-RUNS = 5
+EPOCHS = 15000
+RUNS = 15
 
 # Train the model
 def training(X, Y_train, model, loss_fn, optimizer):
@@ -231,3 +231,134 @@ def plotAccuracies(epochs, accuracies, xlabel="Epochs"):
     plt.ylim([0, 1.05])
     plt.show()
 plotAccuracies(EPOCHS, averaged_centralized_accuracies)
+
+# ------------------------------
+# Part 2: Graph machine learning
+# Get training dataset
+
+# TODO: Dataset
+
+# Generate graph structure
+G = mAryGraphGen(m=3, cluster_size=50, sparse_connections=5, p=0.3, path="graphData/generatedMAryClusteredGraph.csv", plotGraph=True)
+# Perform multiple random walk/training/testing runs
+ITERATIONS = 15000
+RUNS = 15
+LEARNING_RATE = 0.01
+
+print("Training and testing graph machine learning model...")
+def graphRandomWalkLearn(G, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
+                         runs=5, timeCount=15000, plotResults=True, learning_rate=0.01):
+    test_losses_runs = []
+    accuracies_runs = []
+    startingNode = np.random.choice(G.nodes) # Use the same starting node across each run
+    for n in range(runs):
+         # Performs random walk
+        times = np.arange(timeCount)
+        nodesVisited, P, tvDistances = MetropolisHastingsRandomWalk(G, times, startNode=startingNode)
+
+        # Set up machine learning model
+        loss_fn = torch.nn.CrossEntropyLoss()
+        model = LinearClassification()
+        checkpoint = torch.load("starting_model.pth", weights_only=True)
+        model.load_state_dict(checkpoint)
+        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
+        # Perform machine learning based on nodes visited
+        # Train at each node visited
+        test_losses = []
+        accuracies = []
+        counter1 = 0
+        counter2 = 0
+        counter3 = 0
+        for i in range(len(nodesVisited)):
+            nodeNum = nodesVisited[i]
+            nodeType = G.getNodeType(nodeNum)
+            if (nodeType == 1):
+                X_trainSample = X1_train[counter1]
+                Y_trainSample = Y1_train[counter1]
+                counter1 += 1
+                counter1 %= len(X1_train)
+            elif (nodeType == 2):
+                X_trainSample = X2_train[counter2]
+                Y_trainSample = Y2_train[counter2]
+                counter2 += 1
+                counter2 %= len(X2_train)
+            else:
+                X_trainSample = X3_train[counter3]
+                Y_trainSample = Y3_train[counter3]
+                counter3 += 1
+                counter3 %= len(X3_train)
+
+            X_trainSample = torch.tensor(X_trainSample).type(torch.float)
+            Y_trainSample = torch.tensor(Y_trainSample).type(torch.float)
+            train_loss = training(X_trainSample, Y_trainSample, model, loss_fn, optimizer)
+
+             # Test model on random sample
+            X_test = torch.tensor(X_test).type(torch.float)
+            Y_test = torch.tensor(Y_test).type(torch.float)
+            test_loss, accuracy = testing(X_test, Y_test, model)
+
+             # Get results from current node testing
+            test_losses.append(test_loss)
+            accuracies.append(accuracy)
+            if (i % 100 == 0):
+                print(f"\nIteration {i}: Training Loss = {train_loss.item()}")
+                print(f"Iteration {i}: Testing Loss = {test_loss}")
+                print(f"Iteration {i}: Accuracy = {accuracy}")
+            
+        # Append results of run
+        test_losses_runs.append(test_losses)
+        accuracies_runs.append(accuracies)
+
+    # Average results across multiple runs
+    averaged_test_losses = averageRunData(runs, test_losses_runs)
+    averaged_accuracies = averageRunData(runs, accuracies_runs)
+
+    # Output results from graph random walk learning
+    if (plotResults):
+        plotTestLosses(timeCount, averaged_test_losses, xlabel="Iterations")
+        plotAccuracies(timeCount, averaged_accuracies, xlabel="Iterations")
+    return averaged_test_losses, averaged_accuracies
+
+averaged_clustered_test_losses, averaged_clustered_accuracies = graphRandomWalkLearn(G, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
+                                                                                     runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
+plotTestLosses(ITERATIONS, averaged_clustered_test_losses, xlabel="Iterations")
+plotAccuracies(ITERATIONS, averaged_clustered_accuracies, xlabel="Iterations")
+
+# Mix graph
+n = 60_000
+times = np.arange(n+1)
+sampleTimes, energies, numGoodLinks, Gmixed = mAryGlauberDynamicsDataSwitch(3, G, times, 10, plot=False, samplingSize=100)
+
+# Post-mixing training/testing
+averaged_mixed_test_losses, averaged_mixed_accuracies = graphRandomWalkLearn(Gmixed, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
+                                                                                     runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
+
+# TODO: Plot results
+# Plot combined graphs from centralized, complete, and clustered runs
+def plotCombinedTestLosses(iterations, centralized_test_losses, clustered_test_losses, mixed_test_losses, xlabel="Iterations"):
+    x = np.arange(iterations)
+    plt.title("Comparison of Learning Test Losses")
+    plt.xlabel(xlabel)
+    plt.ylabel("Test Losses")
+    plt.ylim([0, 1.05])
+
+    plt.plot(x, centralized_test_losses, label="Centralized")
+    #plt.plot(x, complete_test_losses, label="Complete Graph")
+    plt.plot(x, clustered_test_losses, label="Clustered Erdos-Renyi (Unmixed)")
+    plt.plot(x, mixed_test_losses, label="Clustered Erdos-Renyi (Mixed)")
+    plt.legend()
+    plt.show()
+def plotCombinedAccuracies(iterations, centralized_accuracies, clustered_accuracies, mixed_accuracies, xlabel="Iterations"):
+    x = np.arange(iterations)
+    plt.title("Comparison of Learning Test Accuracies")
+    plt.xlabel(xlabel)
+    plt.ylabel("Test Accuracy")
+    plt.ylim([0, 1.05])
+
+    plt.plot(x, centralized_accuracies, label="Centralized")
+    #plt.plot(x, complete_accuracies, label="Complete Graph")
+    plt.plot(x, clustered_accuracies, label="Clustered Erdos-Renyi (Unmixed)")
+    plt.plot(x, mixed_accuracies, label="Clustered Erdos-Renyi (Mixed)")
+    plt.legend()
+    plt.show()
