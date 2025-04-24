@@ -334,7 +334,7 @@ sampleTimes, energies, numGoodLinks, Gmixed = mAryGlauberDynamicsDataSwitch(3, G
 averaged_mixed_test_losses, averaged_mixed_accuracies = graphRandomWalkLearn(Gmixed, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
                                                                                      runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
 
-# TODO: Plot results
+# Plot results
 # Plot combined graphs from centralized, complete, and clustered runs
 def plotCombinedTestLosses(iterations, centralized_test_losses, clustered_test_losses, mixed_test_losses, xlabel="Iterations"):
     x = np.arange(iterations)
@@ -362,3 +362,4 @@ def plotCombinedAccuracies(iterations, centralized_accuracies, clustered_accurac
     plt.plot(x, mixed_accuracies, label="Clustered Erdos-Renyi (Mixed)")
     plt.legend()
     plt.show()
+plotCombinedAccuracies(ITERATIONS, averaged_centralized_accuracies, averaged_clustered_accuracies, averaged_mixed_accuracies)
