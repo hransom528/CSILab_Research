@@ -46,7 +46,6 @@ scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
 # Split the data set into training and testing sets
-# TODO: Verify split
 X_train, X_test, y_train, y_test = train_test_split(
     X_scaled, y, test_size=0.2, random_state=2)
 
@@ -123,7 +122,7 @@ class LinearClassification(torch.nn.Module):
         return y_pred
 LEARNING_RATE = 0.01
 EPOCHS = 15000
-RUNS = 15
+RUNS = 20
 
 # Train the model
 def training(X, Y_train, model, loss_fn, optimizer):
@@ -234,15 +233,68 @@ plotAccuracies(EPOCHS, averaged_centralized_accuracies)
 
 # ------------------------------
 # Part 2: Graph machine learning
-# Get training dataset
 
-# TODO: Dataset
+# Format dataset for graph training
+CLUSTER_SIZE = 40
+TEST_SIZE = 50 - CLUSTER_SIZE
+X1 = []
+X2 = []
+X3 = []
+Y1 = []
+Y2 = []
+Y3 = []
+for i in range(len(X)):
+    if (y[i] == 0):
+        X1.append(X[i])
+        Y1.append(y[i])
+    elif (y[i] == 1):
+        X2.append(X[i])
+        Y2.append(y[i])
+    elif (y[i] == 2):
+        X3.append(X[i])
+        Y3.append(y[i])
+X1_train = X1[:CLUSTER_SIZE]
+X2_train = X2[:CLUSTER_SIZE]
+X3_train = X3[:CLUSTER_SIZE]
+Y1_train = Y1[:CLUSTER_SIZE]
+Y2_train = Y2[:CLUSTER_SIZE]
+Y3_train = Y3[:CLUSTER_SIZE]
+
+X1_test = X1[CLUSTER_SIZE:]
+X2_test = X2[CLUSTER_SIZE:]
+X3_test = X3[CLUSTER_SIZE:]
+Y1_test = Y1[CLUSTER_SIZE:]
+Y2_test = Y2[CLUSTER_SIZE:]
+Y3_test = Y3[CLUSTER_SIZE:]
+X_test = [*X1_test, *X2_test, *X3_test]
+Y_test = [*Y1_test, *Y2_test, *Y3_test]
+
+# One-hot encode labels
+trainLabels = []
+for i in range(len(Y1_train)):
+    trainLabels.append(oneHotLabel(Y1_train[i]))
+Y1_train = torch.Tensor(trainLabels)
+
+trainLabels = []
+for i in range(len(Y2_train)):
+    trainLabels.append(oneHotLabel(Y2_train[i]))
+Y2_train = torch.Tensor(trainLabels)
+
+trainLabels = []
+for i in range(len(Y3_train)):
+    trainLabels.append(oneHotLabel(Y3_train[i]))
+Y3_train = torch.Tensor(trainLabels)
+
+testLabels = []
+for i in range(len(Y_test)):
+    testLabels.append(oneHotLabel(Y_test[i]))
+Y_test = torch.Tensor(testLabels)
 
 # Generate graph structure
-G = mAryGraphGen(m=3, cluster_size=50, sparse_connections=5, p=0.3, path="graphData/generatedMAryClusteredGraph.csv", plotGraph=True)
+G = mAryGraphGen(m=3, cluster_size=CLUSTER_SIZE, sparse_connections=5, p=0.3, path="graphData/generatedMAryClusteredGraph.csv", plotGraph=True)
 # Perform multiple random walk/training/testing runs
 ITERATIONS = 15000
-RUNS = 15
+RUNS = 20
 LEARNING_RATE = 0.01
 
 print("Training and testing graph machine learning model...")
@@ -291,17 +343,20 @@ def graphRandomWalkLearn(G, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3
 
             X_trainSample = torch.tensor(X_trainSample).type(torch.float)
             Y_trainSample = torch.tensor(Y_trainSample).type(torch.float)
+            #print(type(X_trainSample))
+            #print(type(Y_trainSample))
+            #print(type(Y))
             train_loss = training(X_trainSample, Y_trainSample, model, loss_fn, optimizer)
 
              # Test model on random sample
             X_test = torch.tensor(X_test).type(torch.float)
             Y_test = torch.tensor(Y_test).type(torch.float)
-            test_loss, accuracy = testing(X_test, Y_test, model)
+            test_loss, accuracy = testing(X_test, Y_test, loss_fn, model)
 
              # Get results from current node testing
             test_losses.append(test_loss)
             accuracies.append(accuracy)
-            if (i % 100 == 0):
+            if (i % 1000 == 0):
                 print(f"\nIteration {i}: Training Loss = {train_loss.item()}")
                 print(f"Iteration {i}: Testing Loss = {test_loss}")
                 print(f"Iteration {i}: Accuracy = {accuracy}")
