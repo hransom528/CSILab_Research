@@ -288,6 +288,71 @@ def dRegularGraphGen(size, d, path="graphData/generatedRegularGraph.csv", plotGr
 	# Return custom graph object
 	return GraphObj
 
+# Generates a single M-ary complete graph with specified size
+def mAryCompleteGraphGen(size, m=3, path="graphData/generatedMAryCompleteGraph.csv", plotGraph=False):
+	# Check m parameter
+	if (m <= 1):
+		raise ValueError(f"m is too small ({m}), needs to be at least 2!")
+	elif (m == 2):
+		G = completeGraphGen(size, path=path, plotGraph=plotGraph)
+		return G
+	
+	# Check if m evenly divides size
+	if ((size % m) != 0):
+		raise ValueError(f"Size ({size}) isn\'t evenly divisble by m ({m})!")
+
+	# Generate complete graph
+	G = nx.complete_graph(size)
+
+	# Set node types
+	# TODO: Improve this assignment method
+	node_types = []
+	cluster_size = (size // m)
+	for i in range(m):
+		type_val = i+1
+		cluster_types = [type_val] * cluster_size
+		for t in cluster_types:
+			node_types.append(t)
+
+	# Output joined graph
+	graphLayout = nx.spring_layout(G)
+	if (plotGraph):
+		if (m > 9):
+			raise ValueError("m-ary graph too big to plot (not enough colors)")
+		else:
+			# Set color map based on types
+			colors = "rbgcmykw"
+			color_map = []
+			for i in range(m):
+				cluster_color_type = colors[i]
+				cluster_colors = [cluster_color_type] * cluster_size
+				for c in cluster_colors:
+					color_map.append(c)
+
+			# Plot graph
+			nx.draw(G, pos=graphLayout, node_color=color_map, with_labels=False, node_size=40)
+			plt.show()
+
+	# Export adjacency matrix to CSV
+	adjMatrix = nx.adjacency_matrix(G).toarray()
+	graph_df = pd.DataFrame(adjMatrix)
+	graph_df.to_csv(path, header=False, index=False)
+
+	# Create custom Graph object
+	GraphObj = Graph.importTypedCSV(path, node_types, m=m)
+	GraphObj.layout = graphLayout
+	GraphObj.edges = G.number_of_edges()
+
+	# Export node types to file
+	with open(path+".types", "w") as output:
+		outStr = str(node_types)
+		outStr = outStr.replace("[", "")
+		outStr = outStr.replace("]", "")
+		output.write(outStr)
+
+	# Return custom graph object
+	return GraphObj
+
 # MAIN
 if __name__ == "__main__":
 	# Handles command-line arguments
