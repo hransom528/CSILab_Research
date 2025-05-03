@@ -15,10 +15,10 @@ from sklearn.preprocessing import StandardScaler
 
 # Custom Imports
 from Graph import Graph
-from graphGen import graphGen, mAryGraphGen
+from graphGen import graphGen, mAryGraphGen, mAryCompleteGraphGen
 from TVDistance import tvDistance
 from RandomWalk import MetropolisHastingsRandomWalk, plotTVDistances
-from DataMixing import GlauberDynamicsDataSwitch, mAryGlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks
+from DataMixing import GlauberDynamicsDataSwitch, mAryGlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks, plotTVHist
 from MNISTData import loadMNISTData
 
 # Set random seed for consistency
@@ -120,9 +120,9 @@ class LinearClassification(torch.nn.Module):
     def forward(self, x):
         y_pred = self.linear(x)
         return y_pred
-LEARNING_RATE = 0.01
 EPOCHS = 15000
-RUNS = 20
+RUNS = 50
+LEARNING_RATE = 0.05
 
 # Train the model
 def training(X, Y_train, model, loss_fn, optimizer):
@@ -218,7 +218,7 @@ def plotTestLosses(epochs, test_losses, xlabel="Epochs"):
     plt.ylabel("Testing Loss (CrossEntropy)")
     plt.ylim([0, 1])
     plt.show()
-plotTestLosses(EPOCHS, averaged_centralized_test_losses)
+#plotTestLosses(EPOCHS, averaged_centralized_test_losses)
 
 # Plots accuracies over time (epochs)
 def plotAccuracies(epochs, accuracies, xlabel="Epochs"):
@@ -229,7 +229,7 @@ def plotAccuracies(epochs, accuracies, xlabel="Epochs"):
     plt.ylabel("Accuracy")
     plt.ylim([0, 1.05])
     plt.show()
-plotAccuracies(EPOCHS, averaged_centralized_accuracies)
+#plotAccuracies(EPOCHS, averaged_centralized_accuracies)
 
 # ------------------------------
 # Part 2: Graph machine learning
@@ -291,15 +291,16 @@ for i in range(len(Y_test)):
 Y_test = torch.Tensor(testLabels)
 
 # Generate graph structure
-G = mAryGraphGen(m=3, cluster_size=CLUSTER_SIZE, sparse_connections=5, p=0.3, path="graphData/generatedMAryClusteredGraph.csv", plotGraph=True)
+G = mAryGraphGen(m=3, cluster_size=CLUSTER_SIZE, sparse_connections=5, p=0.3, path="graphData/generatedMAryClusteredGraph.csv", plotGraph=False)
+G2 = mAryCompleteGraphGen(3*CLUSTER_SIZE, m=3, path="./graphData/generatedMAryCompleteGraph.csv", plotGraph=False)
 # Perform multiple random walk/training/testing runs
 ITERATIONS = 15000
-RUNS = 20
-LEARNING_RATE = 0.01
+RUNS = 50
+LEARNING_RATE = 0.05
 
 print("Training and testing graph machine learning model...")
 def graphRandomWalkLearn(G, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
-                         runs=5, timeCount=15000, plotResults=True, learning_rate=0.01):
+                         runs=5, timeCount=15000, plotResults=False, learning_rate=0.01):
     test_losses_runs = []
     accuracies_runs = []
     startingNode = np.random.choice(G.nodes) # Use the same starting node across each run
@@ -377,21 +378,25 @@ def graphRandomWalkLearn(G, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3
 
 averaged_clustered_test_losses, averaged_clustered_accuracies = graphRandomWalkLearn(G, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
                                                                                      runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
-plotTestLosses(ITERATIONS, averaged_clustered_test_losses, xlabel="Iterations")
-plotAccuracies(ITERATIONS, averaged_clustered_accuracies, xlabel="Iterations")
+averaged_complete_test_losses, averaged_complete_accuracies = graphRandomWalkLearn(G2, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
+                                                                                     runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
+#plotTestLosses(ITERATIONS, averaged_clustered_test_losses, xlabel="Iterations")
+#plotAccuracies(ITERATIONS, averaged_clustered_accuracies, xlabel="Iterations")
 
 # Mix graph
 n = 60_000
 times = np.arange(n+1)
 sampleTimes, energies, numGoodLinks, Gmixed = mAryGlauberDynamicsDataSwitch(3, G, times, 10, plot=False, samplingSize=100)
+plotTVHist(Gmixed, m=3)
 
 # Post-mixing training/testing
+#ITERATIONS = 50000
 averaged_mixed_test_losses, averaged_mixed_accuracies = graphRandomWalkLearn(Gmixed, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
                                                                                      runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
 
 # Plot results
 # Plot combined graphs from centralized, complete, and clustered runs
-def plotCombinedTestLosses(iterations, centralized_test_losses, clustered_test_losses, mixed_test_losses, xlabel="Iterations"):
+def plotCombinedTestLosses(iterations, centralized_test_losses, complete_test_losses, clustered_test_losses, mixed_test_losses, xlabel="Iterations"):
     x = np.arange(iterations)
     plt.title("Comparison of Learning Test Losses")
     plt.xlabel(xlabel)
@@ -399,12 +404,12 @@ def plotCombinedTestLosses(iterations, centralized_test_losses, clustered_test_l
     plt.ylim([0, 1.05])
 
     plt.plot(x, centralized_test_losses, label="Centralized")
-    #plt.plot(x, complete_test_losses, label="Complete Graph")
+    plt.plot(x, complete_test_losses, label="Complete Graph")
     plt.plot(x, clustered_test_losses, label="Clustered Erdos-Renyi (Unmixed)")
     plt.plot(x, mixed_test_losses, label="Clustered Erdos-Renyi (Mixed)")
     plt.legend()
     plt.show()
-def plotCombinedAccuracies(iterations, centralized_accuracies, clustered_accuracies, mixed_accuracies, xlabel="Iterations"):
+def plotCombinedAccuracies(iterations, centralized_accuracies, complete_accuracies, clustered_accuracies, mixed_accuracies, xlabel="Iterations"):
     x = np.arange(iterations)
     plt.title("Comparison of Learning Test Accuracies")
     plt.xlabel(xlabel)
@@ -412,9 +417,9 @@ def plotCombinedAccuracies(iterations, centralized_accuracies, clustered_accurac
     plt.ylim([0, 1.05])
 
     plt.plot(x, centralized_accuracies, label="Centralized")
-    #plt.plot(x, complete_accuracies, label="Complete Graph")
+    plt.plot(x, complete_accuracies, label="Complete Graph")
     plt.plot(x, clustered_accuracies, label="Clustered Erdos-Renyi (Unmixed)")
     plt.plot(x, mixed_accuracies, label="Clustered Erdos-Renyi (Mixed)")
     plt.legend()
     plt.show()
-plotCombinedAccuracies(ITERATIONS, averaged_centralized_accuracies, averaged_clustered_accuracies, averaged_mixed_accuracies)
+plotCombinedAccuracies(ITERATIONS, averaged_centralized_accuracies, averaged_complete_accuracies, averaged_clustered_accuracies, averaged_mixed_accuracies)
