@@ -4,4 +4,4 @@ __pycache__
 RandomWalk/mixingPics
 RandomWalk/MNIST_Data
 RandomWalk/graphData
-RandomWalk/starting_model.pth
+RandomWalk/*.pth

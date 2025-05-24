@@ -21,6 +21,21 @@ from RandomWalk import MetropolisHastingsRandomWalk, plotTVDistances
 from DataMixing import GlauberDynamicsDataSwitch, mAryGlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks, plotTVHist
 from MNISTData import loadMNISTData
 
+# Save results to/from files
+def saveArrToFile(arr, path="results/arr0.txt"):
+    with open(path, "w") as output:
+        outStr = str(arr)
+        outStr = outStr.replace("[", "")
+        outStr = outStr.replace("]", "")
+        output.write(outStr)
+def loadArrFromFile(path="results/arr0.txt"):
+    arr = []
+    with open(path, "r") as file:
+        arrStr = file.readline()
+        arr = arrStr.split(",")
+        arr = [float(i) for i in arr]
+    return arr
+
 # Set random seed for consistency
 SEED = 45
 torch.manual_seed(SEED)
@@ -165,7 +180,7 @@ accuracies_runs = []
 
 starting_model = LinearClassification()
 starting_parameters = starting_model.parameters()
-torch.save(starting_model.state_dict(), "starting_model.pth")
+torch.save(starting_model.state_dict(), "starting_model_iris.pth")
 for i in range(RUNS):
     # Reset model/data in between runs
     test_losses = []
@@ -173,7 +188,7 @@ for i in range(RUNS):
 
     model = LinearClassification()
     loss_fn = torch.nn.CrossEntropyLoss()
-    checkpoint = torch.load("starting_model.pth", weights_only=True)
+    checkpoint = torch.load("starting_model_iris.pth", weights_only=True)
     model.load_state_dict(checkpoint)
     optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
 
@@ -208,6 +223,7 @@ def averageRunData(runs, data):
     return averaged_data
 averaged_centralized_test_losses = averageRunData(RUNS, test_losses_runs)
 averaged_centralized_accuracies = averageRunData(RUNS, accuracies_runs)
+saveArrToFile(averaged_centralized_accuracies, path="results/iris/centralized.txt")
 
 # Plots test losses over time (epochs)
 def plotTestLosses(epochs, test_losses, xlabel="Epochs"):
@@ -294,7 +310,7 @@ Y_test = torch.Tensor(testLabels)
 G = mAryGraphGen(m=3, cluster_size=CLUSTER_SIZE, sparse_connections=5, p=0.3, path="graphData/generatedMAryClusteredGraph.csv", plotGraph=False)
 G2 = mAryCompleteGraphGen(3*CLUSTER_SIZE, m=3, path="./graphData/generatedMAryCompleteGraph.csv", plotGraph=False)
 # Perform multiple random walk/training/testing runs
-ITERATIONS = 15000
+ITERATIONS = 50000
 RUNS = 50
 LEARNING_RATE = 0.05
 
@@ -312,7 +328,7 @@ def graphRandomWalkLearn(G, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3
         # Set up machine learning model
         loss_fn = torch.nn.CrossEntropyLoss()
         model = LinearClassification()
-        checkpoint = torch.load("starting_model.pth", weights_only=True)
+        checkpoint = torch.load("starting_model_iris.pth", weights_only=True)
         model.load_state_dict(checkpoint)
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
@@ -378,21 +394,24 @@ def graphRandomWalkLearn(G, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3
 
 averaged_clustered_test_losses, averaged_clustered_accuracies = graphRandomWalkLearn(G, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
                                                                                      runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
-averaged_complete_test_losses, averaged_complete_accuracies = graphRandomWalkLearn(G2, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
-                                                                                     runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
+#averaged_complete_test_losses, averaged_complete_accuracies = graphRandomWalkLearn(G2, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
+#                                                                                     runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
 #plotTestLosses(ITERATIONS, averaged_clustered_test_losses, xlabel="Iterations")
 #plotAccuracies(ITERATIONS, averaged_clustered_accuracies, xlabel="Iterations")
+saveArrToFile(averaged_clustered_accuracies, path="results/iris/clustered.txt")
+#saveArrToFile(averaged_complete_accuracies, path="results/complete.txt")
 
 # Mix graph
 n = 60_000
 times = np.arange(n+1)
 sampleTimes, energies, numGoodLinks, Gmixed = mAryGlauberDynamicsDataSwitch(3, G, times, 10, plot=False, samplingSize=100)
-plotTVHist(Gmixed, m=3)
+#plotTVHist(Gmixed, m=3)
 
 # Post-mixing training/testing
-#ITERATIONS = 50000
+ITERATIONS = 15000
 averaged_mixed_test_losses, averaged_mixed_accuracies = graphRandomWalkLearn(Gmixed, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
                                                                                      runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
+saveArrToFile(averaged_mixed_accuracies, path="results/iris/mixed.txt")
 
 # Plot results
 # Plot combined graphs from centralized, complete, and clustered runs
@@ -409,7 +428,7 @@ def plotCombinedTestLosses(iterations, centralized_test_losses, complete_test_lo
     plt.plot(x, mixed_test_losses, label="Clustered Erdos-Renyi (Mixed)")
     plt.legend()
     plt.show()
-def plotCombinedAccuracies(iterations, centralized_accuracies, complete_accuracies, clustered_accuracies, mixed_accuracies, xlabel="Iterations"):
+def plotCombinedAccuracies(iterations, centralized_accuracies, clustered_accuracies, mixed_accuracies, xlabel="Iterations"):
     x = np.arange(iterations)
     plt.title("Comparison of Learning Test Accuracies")
     plt.xlabel(xlabel)
@@ -417,9 +436,9 @@ def plotCombinedAccuracies(iterations, centralized_accuracies, complete_accuraci
     plt.ylim([0, 1.05])
 
     plt.plot(x, centralized_accuracies, label="Centralized")
-    plt.plot(x, complete_accuracies, label="Complete Graph")
-    plt.plot(x, clustered_accuracies, label="Clustered Erdos-Renyi (Unmixed)")
+    #plt.plot(x, complete_accuracies, label="Complete Graph")
+    plt.plot(x, clustered_accuracies[:15000], label="Clustered Erdos-Renyi (Unmixed)")
     plt.plot(x, mixed_accuracies, label="Clustered Erdos-Renyi (Mixed)")
     plt.legend()
     plt.show()
-plotCombinedAccuracies(ITERATIONS, averaged_centralized_accuracies, averaged_complete_accuracies, averaged_clustered_accuracies, averaged_mixed_accuracies)
+plotCombinedAccuracies(ITERATIONS, averaged_centralized_accuracies, averaged_clustered_accuracies, averaged_mixed_accuracies)
