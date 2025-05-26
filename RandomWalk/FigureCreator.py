@@ -5,6 +5,15 @@
 # Imports
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+
+# Custom imports
+from Graph import Graph
+from graphGen import graphGen, mAryGraphGen, mAryCompleteGraphGen
+from TVDistance import tvDistance
+from DataMixing import GlauberDynamicsDataSwitch, mAryGlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks, plotTVHist
+
+matplotlib.rcParams.update({'font.size': 22})
 
 # Save results to/from files
 def saveArrToFile(arr, path="results/arr0.txt"):
@@ -32,10 +41,10 @@ def plotCombinedAccuracies(iterations, centralized_accuracies, clustered_accurac
     plt.ylabel("Test Accuracy")
     plt.ylim([0, 1.05])
 
-    plt.plot(x, centralized_accuracies[:iterations], label="Centralized")
+    #plt.plot(x, centralized_accuracies[:iterations], label="Centralized", color="royalblue")
     #plt.plot(x, complete_accuracies, label="Complete Graph")
-    plt.plot(x, clustered_accuracies[:iterations], label="Clustered Erdos-Renyi (Unmixed)")
-    plt.plot(x, mixed_accuracies[:iterations], label="Clustered Erdos-Renyi (Mixed)")
+    plt.plot(x, clustered_accuracies[:iterations], label="Clustered Erdos-Renyi (Unmixed)", color="darkorange")
+    plt.plot(x, mixed_accuracies[:iterations], label="Clustered Erdos-Renyi (Mixed)", color="green")
     plt.legend()
     plt.show()
 def plotClusteredAccuracy(iterations, accuracies, xlabel="Iterations"):
@@ -46,12 +55,35 @@ def plotClusteredAccuracy(iterations, accuracies, xlabel="Iterations"):
     plt.ylabel("Accuracy")
     plt.ylim([0, 1.05])
     plt.show()
-plotCombinedAccuracies(5000, synth_centralized_accuracies, synth_clustered_accuracies, synth_mixed_accuracies, xlabel="Iterations")
-plotClusteredAccuracy(50000, synth_clustered_accuracies, xlabel="Iterations")
+#plotCombinedAccuracies(3000, synth_centralized_accuracies, synth_clustered_accuracies, synth_mixed_accuracies, xlabel="Iterations")
+#plotClusteredAccuracy(50000, synth_clustered_accuracies, xlabel="Iterations")
 
 # Iris Data Figures
 iris_centralized_accuracies = loadArrFromFile(path="results/iris/centralized.txt")
 iris_clustered_accuracies = loadArrFromFile(path="results/iris/clustered.txt")
 iris_mixed_accuracies = loadArrFromFile(path="results/iris/mixed.txt")
-plotCombinedAccuracies(5000, iris_centralized_accuracies, iris_clustered_accuracies, iris_mixed_accuracies, xlabel="Iterations")
-plotClusteredAccuracy(50000, iris_clustered_accuracies, xlabel="Iterations")
+#plotCombinedAccuracies(4000, iris_centralized_accuracies, iris_clustered_accuracies, iris_mixed_accuracies, xlabel="Iterations")
+#plotClusteredAccuracy(50000, iris_clustered_accuracies, xlabel="Iterations")
+
+# Synthetic Data Mixing Figures
+'''
+TRAIN_SIZE = 75
+G = graphGen(cluster_size=TRAIN_SIZE, sparse_connections=15, p=0.1, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
+
+n = 75_000
+times = np.arange(n+1)
+sampleTimes, energies, numGoodLinks, Gmixed = GlauberDynamicsDataSwitch(G, times, 0.1, plot=False, samplingSize=100)
+plotEnergy(sampleTimes, energies)
+plotDiffHist(Gmixed)
+Gmixed.plot_typed_graph()
+'''
+
+# Iris Mixing Figures
+'''
+CLUSTER_SIZE = 40
+G = mAryGraphGen(m=3, cluster_size=CLUSTER_SIZE, sparse_connections=5, p=0.3, path="graphData/generatedMAryClusteredGraph.csv", plotGraph=False)
+n = 60_000
+times = np.arange(n+1)
+sampleTimes, energies, numGoodLinks, Gmixed = mAryGlauberDynamicsDataSwitch(3, G, times, 10, plot=False, samplingSize=100)
+plotEnergy(sampleTimes, energies)
+'''

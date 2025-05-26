@@ -75,7 +75,7 @@ def plotEnergy(times, energies):
     plt.figure()
     plt.plot(times, energies)
     plt.title("Graph Energy Over Time")
-    plt.xlabel("Time Steps")
+    plt.xlabel("No. of Data Swaps")
     plt.ylabel("Energy")
     plt.show()
 
@@ -142,6 +142,9 @@ def GlauberDynamicsDataSwitch(G, times, temperature, plot=True, samplingSize=100
         # Selects a random different-typed edge
         u = np.random.choice(nodeList)
         neighborSet = G.getDifferentNeighborSet(u)
+        while (len(neighborSet) <= 0):
+            u = np.random.choice(nodeList)
+            neighborSet = G.getDifferentNeighborSet(u)
         v = np.random.choice(neighborSet)
         while (G.getNodeType(u) == G.getNodeType(v)):
             v = np.random.choice(neighborSet)

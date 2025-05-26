@@ -243,7 +243,7 @@ class Graph:
 		#print(G.nodes.data())
 		if (not self.layout):
 			self.layout = nx.spring_layout(G)
-		nx.draw_networkx(G, pos=self.layout, node_color=color_map, node_size=20, with_labels=False)
+		nx.draw(G, pos=self.layout, node_color=color_map, node_size=160, with_labels=False, width=1)
 		if (path != ""):
 			plt.savefig(path)
 			plt.close()

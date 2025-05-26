@@ -56,7 +56,7 @@ def graphGen(cluster_size=20, sparse_connections=3, p=0.5, path="graphData/gener
 	# Output joined graph
 	graphLayout = nx.spring_layout(G)
 	if (plotGraph):
-		nx.draw(G, pos=graphLayout, node_color=color_map, with_labels=False, node_size=40)
+		nx.draw(G, pos=graphLayout, node_color=color_map, with_labels=False, node_size=160, width=1)
 		plt.show()
 
 	# Export adjacency matrix to CSV
@@ -315,7 +315,7 @@ def mAryCompleteGraphGen(size, m=3, path="graphData/generatedMAryCompleteGraph.c
 			node_types.append(t)
 
 	# Output joined graph
-	graphLayout = nx.spring_layout(G)
+	graphLayout = nx.spring_layout(G, method="force")
 	if (plotGraph):
 		if (m > 9):
 			raise ValueError("m-ary graph too big to plot (not enough colors)")
@@ -330,7 +330,7 @@ def mAryCompleteGraphGen(size, m=3, path="graphData/generatedMAryCompleteGraph.c
 					color_map.append(c)
 
 			# Plot graph
-			nx.draw(G, pos=graphLayout, node_color=color_map, with_labels=False, node_size=40)
+			nx.draw(G, pos=graphLayout, node_color=color_map, with_labels=False, node_size=40, width=0.1)
 			plt.show()
 
 	# Export adjacency matrix to CSV
