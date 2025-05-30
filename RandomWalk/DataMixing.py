@@ -332,9 +332,11 @@ def MetropolisHastingsDataSwitch(G, times, temperature):
 # MAIN
 if __name__ == "__main__":
     # Remove previous simulation pics (if any)
+    '''
     files = glob.glob('mixingPics/*')
     for f in files:
         os.remove(f)
+    '''
 
     '''
     # --- Part 1: Binary mixing ---
@@ -387,17 +389,41 @@ if __name__ == "__main__":
 
     # --- Part 2: M-ary mixing ---
     print("Generating Graph...")
-    G = mAryGraphGen(m=3, cluster_size=50, sparse_connections=5, p=0.5, path="graphData/mAryMixingGraph.csv", plotGraph=True)
-    G.plot_typed_graph("mixingPics/startGraph.png", m=3)
+    G = mAryGraphGen(m=3, cluster_size=40, sparse_connections=5, p=0.3, path="graphData/mAryMixingGraph.csv", plotGraph=False)
+    nodeTypes = G.nodeTypes
+    #G.plot_typed_graph("mixingPics/startGraph.png", m=3)
 
     # Generate time points
-    n = 50_000
+    n = 30_000
     times = np.arange(n+1)
 
     # Run Glauber Dynamics M-ary data switching simulation
-    sampleTimes, energies, numGoodLinks, MixedGraph = mAryGlauberDynamicsDataSwitch(3, G, times, 10, plot=False, samplingSize=100)
-    plotEnergy(sampleTimes, energies)
-    plotGoodLinks(MixedGraph, sampleTimes, numGoodLinks)
-    plotDiffHist(MixedGraph)
-    plotTVHist(G, m=3)
-    MixedGraph.plot_typed_graph("mixingPics/finalGraph.png", m=3)
+    print("Running Glauber Dynamics M-ary Switching Algorithm...")
+    temperatures = [0.1, 1, 10, 100]
+    sampleTimeTensor = []
+    energyTensor = []
+    for t in temperatures:
+        print(f"Running with temperature: {t}")
+        #Gnew = Graph.importTypedCSV("graphData/mAryMixingGraph.csv", nodeTypes, m=3)  # Reset graph to initial state
+        Gnew = mAryGraphGen(m=3, cluster_size=40, sparse_connections=5, p=0.3, path="graphData/mAryMixingGraph.csv", plotGraph=False)
+        #Gnew.plot_typed_graph(path=f"mixingPics/startGraph_{t}.png", m=3)
+        sampleTimes, energies, numGoodLinks, MixedGraph = mAryGlauberDynamicsDataSwitch(3, Gnew, times, t, plot=False, samplingSize=100)
+        #plotEnergy(sampleTimes, energies)
+        #plotGoodLinks(MixedGraph, sampleTimes, numGoodLinks)
+        #plotDiffHist(MixedGraph)
+        #plotTVHist(G, m=3)
+        #MixedGraph.plot_typed_graph("mixingPics/finalGraph.png", m=3)
+        sampleTimeTensor.append(sampleTimes)
+        energyTensor.append(energies)
+    
+    # Plot energy for each temperature
+    plt.figure()
+    for i in range(len(temperatures)):
+        t = temperatures[i]
+        plt.plot(sampleTimeTensor[i], energyTensor[i], label=f"Beta={t}")
+    plt.title("Graph Energy Over Time")
+    plt.ylim(bottom=0)
+    plt.xlabel("No. of Data Swaps")
+    plt.ylabel("Energy")
+    plt.legend()
+    plt.show()

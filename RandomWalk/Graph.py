@@ -74,6 +74,7 @@ class Graph:
 		return self
 
 	# Typed graph CSV import
+	@staticmethod
 	def importTypedCSV(filename, nodeTypes, m=2):
 		self = Graph.importCSV(filename)
 		if (len(nodeTypes) != self.nodes):

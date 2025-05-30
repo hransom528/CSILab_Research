@@ -41,10 +41,10 @@ def plotCombinedAccuracies(iterations, centralized_accuracies, clustered_accurac
     plt.ylabel("Test Accuracy")
     plt.ylim([0, 1.05])
 
-    #plt.plot(x, centralized_accuracies[:iterations], label="Centralized", color="royalblue")
+    plt.plot(x, centralized_accuracies[:iterations], label="Centralized", color="royalblue")
     #plt.plot(x, complete_accuracies, label="Complete Graph")
-    plt.plot(x, clustered_accuracies[:iterations], label="Clustered Erdos-Renyi (Unmixed)", color="darkorange")
-    plt.plot(x, mixed_accuracies[:iterations], label="Clustered Erdos-Renyi (Mixed)", color="green")
+    plt.plot(x, clustered_accuracies[:iterations], label="Random Walk Learning (Before Shuffling)", color="darkorange")
+    plt.plot(x, mixed_accuracies[:iterations], label="Random Walk Learning (After Shuffling)", color="green")
     plt.legend()
     plt.show()
 def plotClusteredAccuracy(iterations, accuracies, xlabel="Iterations"):
@@ -55,14 +55,14 @@ def plotClusteredAccuracy(iterations, accuracies, xlabel="Iterations"):
     plt.ylabel("Accuracy")
     plt.ylim([0, 1.05])
     plt.show()
-#plotCombinedAccuracies(3000, synth_centralized_accuracies, synth_clustered_accuracies, synth_mixed_accuracies, xlabel="Iterations")
+plotCombinedAccuracies(3000, synth_centralized_accuracies, synth_clustered_accuracies, synth_mixed_accuracies, xlabel="Iterations")
 #plotClusteredAccuracy(50000, synth_clustered_accuracies, xlabel="Iterations")
 
 # Iris Data Figures
 iris_centralized_accuracies = loadArrFromFile(path="results/iris/centralized.txt")
 iris_clustered_accuracies = loadArrFromFile(path="results/iris/clustered.txt")
 iris_mixed_accuracies = loadArrFromFile(path="results/iris/mixed.txt")
-#plotCombinedAccuracies(4000, iris_centralized_accuracies, iris_clustered_accuracies, iris_mixed_accuracies, xlabel="Iterations")
+plotCombinedAccuracies(4000, iris_centralized_accuracies, iris_clustered_accuracies, iris_mixed_accuracies, xlabel="Iterations")
 #plotClusteredAccuracy(50000, iris_clustered_accuracies, xlabel="Iterations")
 
 # Synthetic Data Mixing Figures
@@ -76,6 +76,7 @@ sampleTimes, energies, numGoodLinks, Gmixed = GlauberDynamicsDataSwitch(G, times
 plotEnergy(sampleTimes, energies)
 plotDiffHist(Gmixed)
 Gmixed.plot_typed_graph()
+plotTVHist(Gmixed, m=2)
 '''
 
 # Iris Mixing Figures
@@ -87,3 +88,20 @@ times = np.arange(n+1)
 sampleTimes, energies, numGoodLinks, Gmixed = mAryGlauberDynamicsDataSwitch(3, G, times, 10, plot=False, samplingSize=100)
 plotEnergy(sampleTimes, energies)
 '''
+
+# Energy comparison figure
+def plotEnergyComparison(iterations, unmixed_accuracies, mixed_accuracies1, mixed_accuracies2, xlabel="Iterations"):
+    x = np.arange(iterations)
+    plt.title("Comparison of Learning Test Accuracies")
+    plt.xlabel(xlabel)
+    plt.ylabel("Test Accuracy")
+    plt.ylim([0, 1.05])
+
+    plt.plot(x, unmixed_accuracies[:iterations], label="Unmixed", color="darkorange")
+    #plt.plot(x, complete_accuracies, label="Complete Graph")
+    plt.plot(x, mixed_accuracies1[:iterations], label="Mixed (Old Energy)", color="m")
+    plt.plot(x, mixed_accuracies2[:iterations], label="Mixed (New Energy)", color="green")
+    plt.legend()
+    plt.show()
+iris_old_mixed_accuracies = loadArrFromFile(path="results/iris/old_mixed2.txt")
+#plotEnergyComparison(4000, iris_clustered_accuracies, iris_old_mixed_accuracies, iris_mixed_accuracies, xlabel="Iterations")
