@@ -74,6 +74,7 @@ def getEdgeRatio(G):
 def plotEnergy(times, energies):
     plt.figure()
     plt.plot(times, energies)
+    plt.ylim(bottom=0)
     plt.title("Graph Energy Over Time")
     plt.xlabel("No. of Data Swaps")
     plt.ylabel("Energy")
@@ -405,9 +406,9 @@ if __name__ == "__main__":
     for t in temperatures:
         print(f"Running with temperature: {t}")
         #Gnew = Graph.importTypedCSV("graphData/mAryMixingGraph.csv", nodeTypes, m=3)  # Reset graph to initial state
-        Gnew = mAryGraphGen(m=3, cluster_size=40, sparse_connections=5, p=0.3, path="graphData/mAryMixingGraph.csv", plotGraph=False)
+        Gnew = mAryGraphGen(m=2, cluster_size=75, sparse_connections=10, p=0.3, path="graphData/mAryMixingGraph.csv", plotGraph=False)
         #Gnew.plot_typed_graph(path=f"mixingPics/startGraph_{t}.png", m=3)
-        sampleTimes, energies, numGoodLinks, MixedGraph = mAryGlauberDynamicsDataSwitch(3, Gnew, times, t, plot=False, samplingSize=100)
+        sampleTimes, energies, numGoodLinks, MixedGraph = mAryGlauberDynamicsDataSwitch(2, Gnew, times, t, plot=False, samplingSize=100)
         #plotEnergy(sampleTimes, energies)
         #plotGoodLinks(MixedGraph, sampleTimes, numGoodLinks)
         #plotDiffHist(MixedGraph)

@@ -12,7 +12,11 @@ from sklearn.model_selection import train_test_split
 from Graph import Graph
 from graphGen import graphGen, completeGraphGen, erdosRenyiGraphGen, dRegularGraphGen
 from RandomWalk import MetropolisHastingsRandomWalk, plotTVDistances, plotRandomWalk
-from DataMixing import GlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks
+from DataMixing import GlauberDynamicsDataSwitch, mAryGlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks
+
+# Set plot font size
+import matplotlib
+matplotlib.rcParams.update({'font.size': 22})
 
 # Save results to/from files
 def saveArrToFile(arr, path="results/arr0.txt"):
@@ -155,7 +159,7 @@ class LinearClassification(torch.nn.Module):
         y_pred = self.linear(x)
         return y_pred
 LEARNING_RATE = 0.01
-EPOCHS = 15000
+EPOCHS = 10_000
 RUNS = 50
 
 # Train the model
@@ -267,7 +271,7 @@ def plotAccuracies(epochs, accuracies, xlabel="Epochs"):
     plt.ylim([0, 1.05])
     plt.show()
 #plotAccuracies(EPOCHS, averaged_centralized_accuracies)
-saveArrToFile(averaged_centralized_accuracies, path="results/synth/centralized.txt")
+saveArrToFile(averaged_centralized_accuracies, path="results/synth2/centralized.txt")
 
 # ------------------------------
 # Part 2: Graph machine learning
@@ -314,11 +318,11 @@ X_test, Y_test = unison_shuffled_copies(X_test, Y_test)
 G1 = completeGraphGen(2*train_size, path="./graphData/LinearRegressionGraph.csv", plotGraph=False)
 #G2 = erdosRenyiGraphGen(2*train_size, 0.5, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
 #G3 = dRegularGraphGen(2*train_size, 5, path="./graphData/LinearRegressionGraph.csv", plotGraph=True)
-G4 = graphGen(train_size, 10, p=1, path="./graphData/LinearRegressionGraph.csv", plotGraph=False)
+G4 = graphGen(train_size, 10, p=0.3, path="./graphData/LinearRegressionGraph.csv", plotGraph=False)
 #print(G.edges) ~ 8000 edges
 
 # Perform multiple random walk/training/testing runs
-ITERATIONS = 50000
+ITERATIONS = 10_000
 RUNS = 50
 LEARNING_RATE = 0.01
 
@@ -395,7 +399,7 @@ def graphRandomWalkLearn(G, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_te
 averaged_clustered_test_losses, averaged_clustered_accuracies = graphRandomWalkLearn(G4, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
 #plotTestLosses(ITERATIONS, averaged_clustered_test_losses, xlabel="Iterations")
 #plotAccuracies(ITERATIONS, averaged_clustered_accuracies, xlabel="Iterations")
-saveArrToFile(averaged_clustered_accuracies, path="results/synth/clustered.txt")
+saveArrToFile(averaged_clustered_accuracies, path="results/synth2/clustered.txt")
 
 # Test Erdos-Renyi GRW behavior at different p values
 def pValueExperiment(runs, iterations, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, plotResults=False):
@@ -483,13 +487,14 @@ def plotAccuraciesD(iterations, accuracies, xlabel="Iterations"):
 # Mix graph
 n = 75_000
 times = np.arange(n+1)
-sampleTimes, energies, numGoodLinks, Gmixed = GlauberDynamicsDataSwitch(G4, times, 0.1, plot=False, samplingSize=100)
+sampleTimes, energies, numGoodLinks, Gmixed = mAryGlauberDynamicsDataSwitch(2, G4, times, 10, plot=False, samplingSize=100)
 #plotDiffHist(Gmixed)
+plotEnergy(sampleTimes, energies)
 
 # Perform random walk on mixed graph
-ITERATIONS=15000
+#ITERATIONS=10_000
 averaged_mixed_test_losses, averaged_mixed_accuracies = graphRandomWalkLearn(Gmixed, X1_train, X2_train, Y1_train, Y2_train, X_test, Y_test, runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
-saveArrToFile(averaged_mixed_accuracies, path="results/synth/mixed.txt")
+saveArrToFile(averaged_mixed_accuracies, path="results/synth2/mixed.txt")
 
 # Plot combined graphs from centralized, complete, and clustered runs
 def plotCombinedTestLosses(iterations, centralized_test_losses, complete_test_losses, clustered_test_losses, mixed_test_losses, xlabel="Iterations"):
@@ -512,10 +517,10 @@ def plotCombinedAccuracies(iterations, centralized_accuracies, clustered_accurac
     plt.ylabel("Test Accuracy")
     plt.ylim([0, 1.05])
 
-    plt.plot(x, centralized_accuracies, label="Centralized")
+    plt.plot(x, centralized_accuracies[:iterations], label="Centralized", color="royalblue")
     #plt.plot(x, complete_accuracies, label="Complete Graph")
-    plt.plot(x, clustered_accuracies[:15000], label="Clustered Erdos-Renyi (Unmixed)")
-    plt.plot(x, mixed_accuracies, label="Clustered Erdos-Renyi (Mixed)")
+    plt.plot(x, clustered_accuracies[:iterations], label="Random Walk Learning (Before Shuffling)", color="darkorange")
+    plt.plot(x, mixed_accuracies[:iterations], label="Random Walk Learning (After Shuffling)", color="green")
     plt.legend()
     plt.show()
-plotCombinedAccuracies(ITERATIONS, averaged_centralized_accuracies, averaged_clustered_accuracies, averaged_mixed_accuracies)
+plotCombinedAccuracies(4000, averaged_centralized_accuracies, averaged_clustered_accuracies, averaged_mixed_accuracies)

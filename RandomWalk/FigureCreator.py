@@ -13,7 +13,7 @@ from graphGen import graphGen, mAryGraphGen, mAryCompleteGraphGen
 from TVDistance import tvDistance
 from DataMixing import GlauberDynamicsDataSwitch, mAryGlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks, plotTVHist
 
-matplotlib.rcParams.update({'font.size': 22})
+matplotlib.rcParams.update({'font.size': 18})
 
 # Save results to/from files
 def saveArrToFile(arr, path="results/arr0.txt"):
@@ -55,14 +55,14 @@ def plotClusteredAccuracy(iterations, accuracies, xlabel="Iterations"):
     plt.ylabel("Accuracy")
     plt.ylim([0, 1.05])
     plt.show()
-plotCombinedAccuracies(3000, synth_centralized_accuracies, synth_clustered_accuracies, synth_mixed_accuracies, xlabel="Iterations")
+#plotCombinedAccuracies(3000, synth_centralized_accuracies, synth_clustered_accuracies, synth_mixed_accuracies, xlabel="Iterations")
 #plotClusteredAccuracy(50000, synth_clustered_accuracies, xlabel="Iterations")
 
 # Iris Data Figures
 iris_centralized_accuracies = loadArrFromFile(path="results/iris/centralized.txt")
 iris_clustered_accuracies = loadArrFromFile(path="results/iris/clustered.txt")
 iris_mixed_accuracies = loadArrFromFile(path="results/iris/mixed.txt")
-plotCombinedAccuracies(4000, iris_centralized_accuracies, iris_clustered_accuracies, iris_mixed_accuracies, xlabel="Iterations")
+#plotCombinedAccuracies(4000, iris_centralized_accuracies, iris_clustered_accuracies, iris_mixed_accuracies, xlabel="Iterations")
 #plotClusteredAccuracy(50000, iris_clustered_accuracies, xlabel="Iterations")
 
 # Synthetic Data Mixing Figures
@@ -105,3 +105,25 @@ def plotEnergyComparison(iterations, unmixed_accuracies, mixed_accuracies1, mixe
     plt.show()
 iris_old_mixed_accuracies = loadArrFromFile(path="results/iris/old_mixed2.txt")
 #plotEnergyComparison(4000, iris_clustered_accuracies, iris_old_mixed_accuracies, iris_mixed_accuracies, xlabel="Iterations")
+
+# Plot Iris mixing accuracies with varied Beta mixing values
+def plotVariedBetaAccuracies(iterations, centralized_accuracies, clustered_accuracies, mixed_accuracies_tensor, xlabel="Iterations"):
+    x = np.arange(iterations)
+    plt.title("Comparison of Learning Test Accuracies")
+    plt.xlabel(xlabel)
+    plt.ylabel("Test Accuracy")
+    plt.ylim([0, 1.05])
+
+    plt.plot(x, centralized_accuracies[:iterations], label="Centralized", color="royalblue")
+    plt.plot(x, clustered_accuracies[:iterations], label="Random Walk Learning (Before Shuffling)", color="darkorange")
+    for i in range(len(mixed_accuracies_tensor)):
+        plt.plot(x, mixed_accuracies_tensor[i][:iterations], label="Random Walk Learning (After Shuffling, Beta={})".format(0.1*(10**i)), color=f"C{i+2}")
+    plt.legend(loc='lower right', prop={'size': 12})
+    plt.show()
+
+iris2_centralized_accuracies = loadArrFromFile(path="results/iris2/centralized.txt")
+iris2_clustered_accuracies = loadArrFromFile(path="results/iris2/clustered.txt")
+iris2_mixed_accuracies_tensor = []
+for i in range(4):
+    iris2_mixed_accuracies_tensor.append(loadArrFromFile(path=f"results/iris2/mixed{i}.txt"))
+plotVariedBetaAccuracies(4000, iris2_centralized_accuracies, iris2_clustered_accuracies, iris2_mixed_accuracies_tensor, xlabel="Iterations")

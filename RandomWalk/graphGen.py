@@ -315,7 +315,7 @@ def mAryCompleteGraphGen(size, m=3, path="graphData/generatedMAryCompleteGraph.c
 			node_types.append(t)
 
 	# Output joined graph
-	graphLayout = nx.spring_layout(G, method="force")
+	graphLayout = nx.spring_layout(G) #, method="force")
 	if (plotGraph):
 		if (m > 9):
 			raise ValueError("m-ary graph too big to plot (not enough colors)")

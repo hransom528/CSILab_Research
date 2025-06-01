@@ -21,6 +21,10 @@ from RandomWalk import MetropolisHastingsRandomWalk, plotTVDistances
 from DataMixing import GlauberDynamicsDataSwitch, mAryGlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks, plotTVHist
 from MNISTData import loadMNISTData
 
+# Set plot font size
+import matplotlib
+matplotlib.rcParams.update({'font.size': 22})
+
 # Save results to/from files
 def saveArrToFile(arr, path="results/arr0.txt"):
     with open(path, "w") as output:
@@ -135,7 +139,7 @@ class LinearClassification(torch.nn.Module):
     def forward(self, x):
         y_pred = self.linear(x)
         return y_pred
-EPOCHS = 15000
+EPOCHS = 10_000
 RUNS = 50
 LEARNING_RATE = 0.05
 
@@ -223,7 +227,7 @@ def averageRunData(runs, data):
     return averaged_data
 averaged_centralized_test_losses = averageRunData(RUNS, test_losses_runs)
 averaged_centralized_accuracies = averageRunData(RUNS, accuracies_runs)
-saveArrToFile(averaged_centralized_accuracies, path="results/iris/centralized.txt")
+saveArrToFile(averaged_centralized_accuracies, path="results/iris2/centralized.txt")
 
 # Plots test losses over time (epochs)
 def plotTestLosses(epochs, test_losses, xlabel="Epochs"):
@@ -310,7 +314,7 @@ Y_test = torch.Tensor(testLabels)
 G = mAryGraphGen(m=3, cluster_size=CLUSTER_SIZE, sparse_connections=5, p=0.3, path="graphData/generatedMAryClusteredGraph.csv", plotGraph=False)
 G2 = mAryCompleteGraphGen(3*CLUSTER_SIZE, m=3, path="./graphData/generatedMAryCompleteGraph.csv", plotGraph=False)
 # Perform multiple random walk/training/testing runs
-ITERATIONS = 50000
+ITERATIONS = 10_000
 RUNS = 50
 LEARNING_RATE = 0.05
 
@@ -398,20 +402,33 @@ averaged_clustered_test_losses, averaged_clustered_accuracies = graphRandomWalkL
 #                                                                                     runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
 #plotTestLosses(ITERATIONS, averaged_clustered_test_losses, xlabel="Iterations")
 #plotAccuracies(ITERATIONS, averaged_clustered_accuracies, xlabel="Iterations")
-saveArrToFile(averaged_clustered_accuracies, path="results/iris/clustered.txt")
+saveArrToFile(averaged_clustered_accuracies, path="results/iris2/clustered.txt")
 #saveArrToFile(averaged_complete_accuracies, path="results/complete.txt")
 
-# Mix graph
+# Mix and train graph for various temperatures
 n = 60_000
 times = np.arange(n+1)
-sampleTimes, energies, numGoodLinks, Gmixed = mAryGlauberDynamicsDataSwitch(3, G, times, 10, plot=False, samplingSize=100)
-#plotTVHist(Gmixed, m=3)
+temperatures = [0.1, 1, 10, 100]
+sampleTimeTensor = []
+energyTensor = []
+for i in range(len(temperatures)):
+    # Perform mixing
+    t = temperatures[i]
+    print(f"Running with temperature: {t}")
+    Gnew = mAryGraphGen(m=3, cluster_size=CLUSTER_SIZE, sparse_connections=10, p=0.3, path="graphData/mAryMixingGraph.csv", plotGraph=False)
+    sampleTimes, energies, numGoodLinks, Gmixed = mAryGlauberDynamicsDataSwitch(3, Gnew, times, t, plot=False, samplingSize=100)
 
-# Post-mixing training/testing
-ITERATIONS = 15000
-averaged_mixed_test_losses, averaged_mixed_accuracies = graphRandomWalkLearn(Gmixed, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
-                                                                                     runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
-saveArrToFile(averaged_mixed_accuracies, path="results/iris/mixed.txt")
+    # Post-mixing training/testing
+    averaged_mixed_test_losses, averaged_mixed_accuracies = graphRandomWalkLearn(Gmixed, X1_train, X2_train, X3_train, Y1_train, Y2_train, Y3_train, X_test, Y_test, 
+                                                                                        runs=RUNS, timeCount=ITERATIONS, plotResults=False, learning_rate=LEARNING_RATE)
+    saveArrToFile(averaged_mixed_accuracies, path=f"results/iris2/mixed{i}.txt")
+
+    # Save results
+    sampleTimeTensor.append(sampleTimes)
+    energyTensor.append(energies)
+
+saveArrToFile(sampleTimeTensor, path="results/iris2/sampleTimes.txt")
+saveArrToFile(energyTensor, path="results/iris2/energies.txt")
 
 # Plot results
 # Plot combined graphs from centralized, complete, and clustered runs
@@ -435,10 +452,10 @@ def plotCombinedAccuracies(iterations, centralized_accuracies, clustered_accurac
     plt.ylabel("Test Accuracy")
     plt.ylim([0, 1.05])
 
-    plt.plot(x, centralized_accuracies, label="Centralized")
+    plt.plot(x, centralized_accuracies[:iterations], label="Centralized", color="royalblue")
     #plt.plot(x, complete_accuracies, label="Complete Graph")
-    plt.plot(x, clustered_accuracies[:15000], label="Clustered Erdos-Renyi (Unmixed)")
-    plt.plot(x, mixed_accuracies, label="Clustered Erdos-Renyi (Mixed)")
+    plt.plot(x, clustered_accuracies[:iterations], label="Random Walk Learning (Before Shuffling)", color="darkorange")
+    plt.plot(x, mixed_accuracies[:iterations], label="Random Walk Learning (After Shuffling)", color="green")
     plt.legend()
     plt.show()
-plotCombinedAccuracies(ITERATIONS, averaged_centralized_accuracies, averaged_clustered_accuracies, averaged_mixed_accuracies)
+#plotCombinedAccuracies(ITERATIONS, averaged_centralized_accuracies, averaged_clustered_accuracies, averaged_mixed_accuracies)
