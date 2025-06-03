@@ -13,7 +13,7 @@ from graphGen import graphGen, mAryGraphGen, mAryCompleteGraphGen
 from TVDistance import tvDistance
 from DataMixing import GlauberDynamicsDataSwitch, mAryGlauberDynamicsDataSwitch, plotEnergy, plotDiffHist, plotGoodLinks, plotTVHist
 
-matplotlib.rcParams.update({'font.size': 18})
+matplotlib.rcParams.update({'font.size': 22})
 
 # Save results to/from files
 def saveArrToFile(arr, path="results/arr0.txt"):
@@ -118,7 +118,7 @@ def plotVariedBetaAccuracies(iterations, centralized_accuracies, clustered_accur
     plt.plot(x, clustered_accuracies[:iterations], label="Random Walk Learning (Before Shuffling)", color="darkorange")
     for i in range(len(mixed_accuracies_tensor)):
         plt.plot(x, mixed_accuracies_tensor[i][:iterations], label="Random Walk Learning (After Shuffling, Beta={})".format(0.1*(10**i)), color=f"C{i+2}")
-    plt.legend(loc='lower right', prop={'size': 12})
+    plt.legend(loc='lower right', prop={'size': 14})
     plt.show()
 
 iris2_centralized_accuracies = loadArrFromFile(path="results/iris2/centralized.txt")

@@ -11,6 +11,10 @@ from Graph import Graph
 from TVDistance import tvDistance
 from graphGen import graphGen, mAryGraphGen
 
+# Set font size
+import matplotlib
+matplotlib.rcParams.update({'font.size': 22})
+
 # K(sigma, v) - Get number of different-classed neighbors for a given node
 def getDifferentNeighbors(G, node):
     adjMatrix = G.A
@@ -258,11 +262,16 @@ def mAryProbSwitch(m, G, u, v, temperature):
     G.nodeTypes[v] = vType
 
     # Calculate switching probability based off of change in TV distance
-    totalDiff = priorDiff - posteriorDiff 
+    #totalDiff = priorDiff - posteriorDiff 
     #print(priorDiff)
     #print(posteriorDiff)
     #print(totalDiff)
-    switchProb = (1 / float(1 + exp(-temperature * totalDiff)))
+    #switchProb = (1 / float(1 + exp(-temperature * totalDiff)))
+    denominator = exp(-temperature * posteriorDiff) + exp(-temperature * priorDiff)
+    if (denominator == 0):
+        switchProb = 0.5
+    else:
+        switchProb = (exp(-temperature * posteriorDiff)) / denominator
     return switchProb
 
 # Glauber Dynamics M-ary Data Switching
@@ -395,7 +404,7 @@ if __name__ == "__main__":
     #G.plot_typed_graph("mixingPics/startGraph.png", m=3)
 
     # Generate time points
-    n = 30_000
+    n = 5_000
     times = np.arange(n+1)
 
     # Run Glauber Dynamics M-ary data switching simulation
@@ -406,9 +415,10 @@ if __name__ == "__main__":
     for t in temperatures:
         print(f"Running with temperature: {t}")
         #Gnew = Graph.importTypedCSV("graphData/mAryMixingGraph.csv", nodeTypes, m=3)  # Reset graph to initial state
-        Gnew = mAryGraphGen(m=2, cluster_size=75, sparse_connections=10, p=0.3, path="graphData/mAryMixingGraph.csv", plotGraph=False)
+        Gnew = mAryGraphGen(m=3, cluster_size=40, sparse_connections=5, p=0.3, path="graphData/mAryMixingGraph.csv", plotGraph=False)
+        # Gnew = mAryGraphGen(m=2, cluster_size=75, sparse_connections=10, p=0.3, path="graphData/mAryMixingGraph.csv", plotGraph=False)
         #Gnew.plot_typed_graph(path=f"mixingPics/startGraph_{t}.png", m=3)
-        sampleTimes, energies, numGoodLinks, MixedGraph = mAryGlauberDynamicsDataSwitch(2, Gnew, times, t, plot=False, samplingSize=100)
+        sampleTimes, energies, numGoodLinks, MixedGraph = mAryGlauberDynamicsDataSwitch(3, Gnew, times, t, plot=False, samplingSize=1)
         #plotEnergy(sampleTimes, energies)
         #plotGoodLinks(MixedGraph, sampleTimes, numGoodLinks)
         #plotDiffHist(MixedGraph)
