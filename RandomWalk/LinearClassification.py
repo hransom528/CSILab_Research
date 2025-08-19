@@ -7,6 +7,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+from pathlib import Path
 
 # Custom imports
 from Graph import Graph
@@ -20,6 +21,9 @@ matplotlib.rcParams.update({'font.size': 22})
 
 # Save results to/from files
 def saveArrToFile(arr, path="results/arr0.txt"):
+    output_file = Path(path)
+    output_file.parent.mkdir(exist_ok=True, parents=True)
+
     with open(path, "w") as output:
         outStr = str(arr)
         outStr = outStr.replace("[", "")
