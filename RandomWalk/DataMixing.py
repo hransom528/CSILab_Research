@@ -75,9 +75,15 @@ def getEdgeRatio(G):
     return numBadLinks / numGoodLinks
 
 # Plots graph energy over time
-def plotEnergy(times, energies):
+def plotEnergy(times, energies, timeLimit=-1):
     plt.figure()
-    plt.plot(times, energies)
+    if (timeLimit != -1):
+        times = np.array(times)
+        energies = np.array(energies)
+        ind = int(np.squeeze(np.where(times == timeLimit))) #int(times.flat[np.abs(times - timeLimit).argmin()]) 
+        plt.plot(times[:ind], energies[:ind])
+    else:
+        plt.plot(times, energies)
     plt.ylim(bottom=0)
     plt.title("Graph Energy Over Time")
     plt.xlabel("No. of Data Swaps")

@@ -164,7 +164,7 @@ class LinearClassification(torch.nn.Module):
         return y_pred
 LEARNING_RATE = 0.01
 EPOCHS = 10_000
-RUNS = 50
+RUNS = 1
 
 # Train the model
 def training(X, Y_train, model, loss_fn, optimizer):
@@ -327,7 +327,7 @@ G4 = graphGen(train_size, 10, p=0.3, path="./graphData/LinearRegressionGraph.csv
 
 # Perform multiple random walk/training/testing runs
 ITERATIONS = 10_000
-RUNS = 50
+RUNS = 1
 LEARNING_RATE = 0.01
 
 print("Training and testing graph machine learning model...")
@@ -493,7 +493,9 @@ n = 75_000
 times = np.arange(n+1)
 sampleTimes, energies, numGoodLinks, Gmixed = mAryGlauberDynamicsDataSwitch(2, G4, times, 10, plot=False, samplingSize=100)
 #plotDiffHist(Gmixed)
-plotEnergy(sampleTimes, energies)
+plotEnergy(sampleTimes, energies, timeLimit=20_000)
+saveArrToFile(sampleTimes, path="results/synth3/mixingTimes.txt")
+saveArrToFile(energies, path="results/synth3/mixingEnergies.txt")
 
 # Perform random walk on mixed graph
 #ITERATIONS=10_000

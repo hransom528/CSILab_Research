@@ -78,6 +78,10 @@ plotDiffHist(Gmixed)
 Gmixed.plot_typed_graph()
 plotTVHist(Gmixed, m=2)
 '''
+times = loadArrFromFile(path="results/synth3/mixingTimes.txt")
+synthMixEnergies = loadArrFromFile(path="results/synth3/mixingEnergies.txt")
+print(synthMixEnergies)
+plotEnergy(times, synthMixEnergies, timeLimit=20000)
 
 # Iris Mixing Figures
 '''
@@ -114,8 +118,8 @@ def plotVariedBetaAccuracies(iterations, centralized_accuracies, clustered_accur
     plt.ylabel("Test Accuracy")
     plt.ylim([0, 1.05])
 
-    plt.plot(x, centralized_accuracies[:iterations], label="Centralized", color="royalblue")
-    plt.plot(x, clustered_accuracies[:iterations], label="Random Walk Learning (Before Shuffling)", color="darkorange")
+    #plt.plot(x, centralized_accuracies[:iterations], label="Centralized", color="royalblue")
+    #plt.plot(x, clustered_accuracies[:iterations], label="Random Walk Learning (Before Shuffling)", color="darkorange")
     for i in range(len(mixed_accuracies_tensor)):
         plt.plot(x, mixed_accuracies_tensor[i][:iterations], label="Random Walk Learning (After Shuffling, Beta={})".format(0.1*(10**i)), color=f"C{i+2}")
     plt.legend(loc='lower right', prop={'size': 14})
